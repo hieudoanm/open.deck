@@ -311,14 +311,20 @@ jobs:
       - name: Build WinUI 3 app
         shell: pwsh
         run: |
-          $msbuild = Get-ChildItem "C:\Program Files\Microsoft Visual Studio\2022\*\MSBuild\Current\Bin\amd64\MSBuild.exe" -ErrorAction SilentlyContinue |
-            Select-Object -First 1
-          if (-not $msbuild) {
-            $msbuild = Get-ChildItem "C:\Program Files\Microsoft Visual Studio\2022\*\MSBuild\Current\Bin\MSBuild.exe" -ErrorAction SilentlyContinue |
-              Select-Object -First 1
+          # Locate VS MSBuild via vswhere (works for VS2022/2026/BuildTools).
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $install = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -property installationPath
+          $candidates = @()
+          if ($install) {
+            $candidates += Join-Path $install "MSBuild\Current\Bin\amd64\MSBuild.exe"
+            $candidates += Join-Path $install "MSBuild\Current\Bin\MSBuild.exe"
           }
+          $candidates += Get-ChildItem "C:\Program Files\Microsoft Visual Studio\*\*\MSBuild\Current\Bin\amd64\MSBuild.exe" -ErrorAction SilentlyContinue |
+            ForEach-Object { $_.FullName }
+          $msbuild = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
           if (-not $msbuild) { throw "Visual Studio MSBuild.exe not found" }
-          & $msbuild.FullName "desktop\windows\OpenDeckWinUI\OpenDeckWinUI.csproj" /p:Configuration=Release /p:Platform=x64 /v:m /nologo
+          Write-Host "Using $msbuild"
+          & $msbuild "desktop\windows\OpenDeckWinUI\OpenDeckWinUI.csproj" /p:Configuration=Release /p:Platform=x64 /v:m /nologo
 
       - name: Rename executable for release
         shell: bash
