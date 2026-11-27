@@ -23,7 +23,7 @@ use axum::{
         ConnectInfo, Path as AxumPath, Query, State,
     },
     http::StatusCode,
-    response::{IntoResponse, Response},
+    response::{Html, IntoResponse, Response},
     routing::{get, post},
     Json, Router,
 };
@@ -179,6 +179,10 @@ async fn main() -> Result<()> {
     });
 
     let app = Router::new()
+        .route("/", get(index_handler))
+        .route("/manifest.webmanifest", get(manifest_handler))
+        .route("/icons/{name}", get(icon_handler))
+        .route("/wake.mp4", get(wake_video_handler))
         .route("/health", get(|| async { "ok" }))
         .route("/status", get(status_handler))
         .route("/devices", get(devices_handler))
@@ -212,6 +216,20 @@ async fn main() -> Result<()> {
     );
     println!("  Actions       : GET /actions, POST /actions/run");
     println!("===============================");
+    if let Some(ip) = lan_ip() {
+        let url = format!(
+            "http://{ip}:{}/?host={ip}&port={}&token={token}",
+            args.port, args.port
+        );
+        println!();
+        println!("  Web UI (scan QR on your phone): {url}");
+        if let Ok(code) = qrcode::QrCode::new(url.as_bytes()) {
+            println!(
+                "{}",
+                code.render::<qrcode::render::unicode::Dense1x2>().build()
+            );
+        }
+    }
     println!();
     info!(%addr, "listening");
 
@@ -222,6 +240,47 @@ async fn main() -> Result<()> {
     )
     .await?;
     Ok(())
+}
+
+/// Browser remote-desktop client, compiled into the binary so a single
+/// `open-deck-server` executable serves both the API and the web UI.
+const INDEX_HTML: &str = include_str!("../web/index.html");
+const MANIFEST: &str = include_str!("../web/manifest.webmanifest");
+
+async fn index_handler() -> Html<&'static str> {
+    Html(INDEX_HTML)
+}
+
+async fn manifest_handler() -> impl IntoResponse {
+    (
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "application/manifest+json",
+        )],
+        MANIFEST,
+    )
+}
+
+async fn wake_video_handler() -> impl IntoResponse {
+    (
+        [(axum::http::header::CONTENT_TYPE, "video/mp4")],
+        include_bytes!("../web/wake.mp4").as_slice(),
+    )
+}
+
+async fn icon_handler(AxumPath(name): AxumPath<String>) -> Response {
+    let icon: Option<&'static [u8]> = match name.as_str() {
+        "apple-touch-icon.png" | "icon-180.png" => {
+            Some(include_bytes!("../web/icons/icon-180.png"))
+        }
+        "icon-192.png" => Some(include_bytes!("../web/icons/icon-192.png")),
+        "icon-512.png" => Some(include_bytes!("../web/icons/icon-512.png")),
+        _ => None,
+    };
+    match icon {
+        Some(bytes) => ([(axum::http::header::CONTENT_TYPE, "image/png")], bytes).into_response(),
+        None => StatusCode::NOT_FOUND.into_response(),
+    }
 }
 
 async fn status_handler(State(state): State<Arc<AppState>>) -> axum::Json<Status> {
@@ -559,5 +618,17 @@ struct DeviceGuard {
 impl Drop for DeviceGuard {
     fn drop(&mut self) {
         self.devices.lock().unwrap().remove(&self.id);
+    }
+}
+
+/// Best-effort LAN IPv4 via the UDP-connect trick (no packets are sent).
+fn lan_ip() -> Option<String> {
+    let socket = std::net::UdpSocket::bind("0.0.0.0:0").ok()?;
+    socket.connect("192.0.2.1:80").ok()?; // TEST-NET-1
+    let ip = socket.local_addr().ok()?.ip().to_string();
+    if ip.starts_with("127.") {
+        None
+    } else {
+        Some(ip)
     }
 }

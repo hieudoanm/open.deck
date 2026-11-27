@@ -21,3 +21,4 @@ clap = { version = "=4.6.10", features = ["derive", "env"] }
 anyhow = "=1.0.105"
 rand = "=0.10.4"
 sysinfo = "=0.40.4"
+qrcode = "=0.15.0"
