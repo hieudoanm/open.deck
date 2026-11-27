@@ -1,7 +1,7 @@
-@import 'tailwindcss';
-@plugin 'daisyui';
-@plugin 'daisyui/theme' {
-  name: 'opendeck';
+@import "tailwindcss";
+@plugin "daisyui";
+@plugin "daisyui/theme" {
+  name: "opendeck";
   default: true;
   prefersdark: true;
   color-scheme: dark;
@@ -37,7 +37,7 @@ body {
   color: var(--color-base-content);
   font:
     15px/1.45 -apple-system,
-    'Segoe UI',
+    "Segoe UI",
     Roboto,
     sans-serif;
   overflow: hidden;

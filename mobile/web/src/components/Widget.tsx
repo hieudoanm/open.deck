@@ -1,9 +1,9 @@
-import type { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 export function Widget({
   label,
   children,
-  className = ''
+  className = "",
 }: {
   label?: string;
   children: ReactNode;

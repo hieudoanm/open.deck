@@ -32,5 +32,6 @@ lint: ## Format check + clippy for the server
 	cd server && cargo clippy --all-targets -- -D warnings
 
 web: ## Build mobile/web (Vite) and copy dist/ into server/web
-	cd mobile/web && pnpm install && pnpm build
+	pnpm install
+	pnpm --filter @opendeck/web build
 	rm -rf server/web && cp -r mobile/web/dist server/web

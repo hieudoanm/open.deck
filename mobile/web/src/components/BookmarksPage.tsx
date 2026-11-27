@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import type { Bookmark } from '../data/bookmarks';
+import { useState } from "react";
+import type { Bookmark } from "../data/bookmarks";
 
 export const BOOKMARKS_PER_PAGE = 8;
 
 export function chunkBookmarks(
   items: Bookmark[],
-  size = BOOKMARKS_PER_PAGE
+  size = BOOKMARKS_PER_PAGE,
 ): Bookmark[][] {
   const out: Bookmark[][] = [];
   for (let i = 0; i < items.length; i += size)
@@ -17,7 +17,7 @@ export function BookmarksPage({
   items,
   index,
   total,
-  onOpen
+  onOpen,
 }: {
   items: Bookmark[];
   index: number;
@@ -37,7 +37,7 @@ export function BookmarksPage({
           return (
             <button
               key={b.href}
-              className={`bm-tile${isOpen ? ' opened' : ''}`}
+              className={`bm-tile${isOpen ? "opened" : ""}`}
               onClick={() => {
                 onOpen(b.href);
                 setOpened(b.href);
@@ -47,7 +47,7 @@ export function BookmarksPage({
               <Icon className="bm-icon" />
               <span className="bm-label">{b.label}</span>
               <span className="bm-desc">
-                {b.badge ? `${b.badge} · ` : ''}
+                {b.badge ? `${b.badge} · ` : ""}
                 {b.description}
               </span>
             </button>

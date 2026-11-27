@@ -1,12 +1,12 @@
-import type { AppEntry, PortEntry } from '../types';
-import { fmtBytes } from '../lib/format';
-import { Widget } from './Widget';
+import type { AppEntry, PortEntry } from "../types";
+import { fmtBytes } from "../lib/format";
+import { Widget } from "./Widget";
 
 export function PortsPage({ ports }: { ports: PortEntry[] | null }) {
   return (
     <>
       <div className="page-title">Listening ports</div>
-      <Widget className="flex-1 min-h-0">
+      <Widget className="min-h-0 flex-1">
         <div className="list">
           {ports == null ? (
             <div className="empty">loading…</div>
@@ -15,7 +15,7 @@ export function PortsPage({ ports }: { ports: PortEntry[] | null }) {
           ) : (
             ports.slice(0, 60).map((p, i) => (
               <div className="row" key={i}>
-                <b>{p.process || '?'}</b>
+                <b>{p.process || "?"}</b>
                 <span className="num">
                   {p.protocol} {p.address}:{p.port}
                 </span>
@@ -35,7 +35,7 @@ export function AppsPage({ apps }: { apps: AppEntry[] | null }) {
   return (
     <>
       <div className="page-title">Top processes</div>
-      <Widget className="flex-1 min-h-0">
+      <Widget className="min-h-0 flex-1">
         <div className="list">
           {top == null ? (
             <div className="empty">loading…</div>

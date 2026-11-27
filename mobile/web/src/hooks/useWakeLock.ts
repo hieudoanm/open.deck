@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
-export type WakeState = 'on' | 'off' | 'unsupported' | null;
+export type WakeState = "on" | "off" | "unsupported" | null;
 
 // Keeps the screen awake while mounted: native Screen Wake Lock where
 // available (secure contexts), otherwise a hidden muted looping video —
@@ -12,15 +12,15 @@ export function useWakeLock(): WakeState {
 
   const ensureVideo = useCallback(() => {
     if (!videoRef.current) {
-      const v = document.createElement('video');
-      v.src = 'wake.mp4';
+      const v = document.createElement("video");
+      v.src = "wake.mp4";
       v.loop = true;
       v.muted = true;
       v.playsInline = true;
-      v.setAttribute('playsinline', '');
-      v.preload = 'auto';
+      v.setAttribute("playsinline", "");
+      v.preload = "auto";
       v.style.cssText =
-        'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;';
+        "position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;";
       document.body.appendChild(v);
       videoRef.current = v;
     }
@@ -28,12 +28,12 @@ export function useWakeLock(): WakeState {
   }, []);
 
   const acquire = useCallback(async () => {
-    if ('wakeLock' in navigator) {
+    if ("wakeLock" in navigator) {
       try {
-        const s = await navigator.wakeLock.request('screen');
+        const s = await navigator.wakeLock.request("screen");
         sentinelRef.current = s;
-        s.addEventListener('release', () => setState('off'));
-        setState('on');
+        s.addEventListener("release", () => setState("off"));
+        setState("on");
         return;
       } catch {
         /* fall through to video fallback */
@@ -41,28 +41,30 @@ export function useWakeLock(): WakeState {
     }
     try {
       await ensureVideo().play();
-      setState('on');
+      setState("on");
     } catch {
       // iOS requires a user gesture before media can play.
-      setState('off');
+      setState("off");
       const retry = () => {
         ensureVideo()
           .play()
-          .then(() => setState('on'))
+          .then(() => setState("on"))
           .catch(() => {});
       };
-      document.body.addEventListener('pointerdown', retry, { once: true });
+      document.body.addEventListener("pointerdown", retry, { once: true });
     }
   }, [ensureVideo]);
 
   useEffect(() => {
-    acquire();
+    // Deferred so state updates land outside the synchronous effect pass.
+    const t = setTimeout(() => void acquire(), 0);
     const onVis = () => {
-      if (document.visibilityState === 'visible') acquire();
+      if (document.visibilityState === "visible") void acquire();
     };
-    document.addEventListener('visibilitychange', onVis);
+    document.addEventListener("visibilitychange", onVis);
     return () => {
-      document.removeEventListener('visibilitychange', onVis);
+      clearTimeout(t);
+      document.removeEventListener("visibilitychange", onVis);
       sentinelRef.current?.release().catch(() => {});
       sentinelRef.current = null;
       videoRef.current?.pause();

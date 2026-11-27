@@ -1,25 +1,26 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useWakeLock } from '../hooks/useWakeLock';
-import { fmtBytes } from '../lib/format';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useWakeLock } from "../hooks/useWakeLock";
+import { fmtBytes } from "../lib/format";
 import type {
   AppEntry,
   HelloMsg,
   PortEntry,
   StatsMsg,
-  StatusMsg
-} from '../types';
-import { BOOKMARKS } from '../data/bookmarks';
-import { AppsPage, PortsPage } from './Pages';
-import { SystemPage } from './SystemPage';
-import { BookmarksPage, chunkBookmarks } from './BookmarksPage';
+  StatusMsg,
+} from "../types";
+import { BOOKMARKS } from "../data/bookmarks";
+import { AppsPage, PortsPage } from "./Pages";
+import { SystemPage } from "./SystemPage";
+import { BookmarksPage, chunkBookmarks } from "./BookmarksPage";
 
 const BOOKMARK_PAGES = chunkBookmarks(BOOKMARKS);
+const PAGE_COUNT = 3 + BOOKMARK_PAGES.length;
 
 export function DeckView({
   host,
   port,
   token,
-  onClose
+  onClose,
 }: {
   host: string;
   port: string;
@@ -27,7 +28,7 @@ export function DeckView({
   onClose: () => void;
 }) {
   const base = `http://${host}:${port}`;
-  const [statusText, setStatusText] = useState('connecting…');
+  const [statusText, setStatusText] = useState("connecting…");
   const [statusOk, setStatusOk] = useState(false);
   const [hello, setHello] = useState<HelloMsg | null>(null);
   const [stats, setStats] = useState<StatsMsg | null>(null);
@@ -75,42 +76,42 @@ export function DeckView({
 
     ws.onopen = () => {
       ws.send(
-        JSON.stringify({ type: 'hello', name: 'OpenDeck Web', version: 1 })
+        JSON.stringify({ type: "hello", name: "OpenDeck Web", version: 1 }),
       );
-      setDeckStatus('connected', true);
+      setDeckStatus("connected", true);
       pollHttp();
       pollRef.current = setInterval(pollHttp, 5000);
     };
 
     ws.onmessage = (ev) => {
-      if (typeof ev.data !== 'string') return; // JPEG frames unused in widget mode
+      if (typeof ev.data !== "string") return; // JPEG frames unused in widget mode
       let msg: Record<string, unknown>;
       try {
         msg = JSON.parse(ev.data);
       } catch {
         return;
       }
-      if (msg.type === 'hello') {
+      if (msg.type === "hello") {
         setHello(msg as unknown as HelloMsg);
-      } else if (msg.type === 'error') {
+      } else if (msg.type === "error") {
         setDeckStatus(`error: ${msg.message}`, false);
-      } else if (msg.type === 'stats') {
+      } else if (msg.type === "stats") {
         setStats(msg as unknown as StatsMsg);
         const s = msg as unknown as StatsMsg;
         setDeckStatus(
-          `cpu ${s.cpu_percent != null ? s.cpu_percent.toFixed(0) + '%' : '?'} · ${fmtBytes(s.mem_used)}/${fmtBytes(s.mem_total)}`,
-          true
+          `cpu ${s.cpu_percent != null ? s.cpu_percent.toFixed(0) + "%" : "?"} · ${fmtBytes(s.mem_used)}/${fmtBytes(s.mem_total)}`,
+          true,
         );
       }
     };
 
     ws.onclose = () => {
       if (closed) return;
-      setDeckStatus('disconnected', false);
+      setDeckStatus("disconnected", false);
       onClose();
     };
     ws.onerror = () => {
-      setDeckStatus('connection failed', false);
+      setDeckStatus("connection failed", false);
     };
 
     return () => {
@@ -127,27 +128,25 @@ export function DeckView({
 
   const startX = useRef<number | null>(null);
 
-  const PAGE_COUNT = 3 + BOOKMARK_PAGES.length;
-
   const openUrl = useCallback(
     (url: string) => {
       fetch(`${base}/open?token=${encodeURIComponent(token)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
       }).catch(() => {});
     },
-    [base, token]
+    [base, token],
   );
 
   const wakeBadge =
-    wake == null ? null : wake === 'on' ? (
+    wake == null ? null : wake === "on" ? (
       <span className="wake-badge on" title="screen wake lock">
         awake
       </span>
     ) : (
       <span className="wake-badge off" title="screen wake lock">
-        {wake === 'unsupported' ? 'no wake lock' : 'sleeping'}
+        {wake === "unsupported" ? "no wake lock" : "sleeping"}
       </span>
     );
 
@@ -162,7 +161,7 @@ export function DeckView({
           ‹
         </button>
         <span className="title">OpenDeck</span>
-        <span className={`status-dot${statusOk ? '' : ' err'}`} />
+        <span className={`status-dot${statusOk ? "" : "err"}`} />
         <span className="status-text">{statusText}</span>
         {wakeBadge}
         <span style={{ flex: 1 }} />
@@ -226,7 +225,7 @@ export function DeckView({
         {Array.from({ length: PAGE_COUNT }, (_, i) => (
           <button
             key={i}
-            className={i === page ? 'on' : ''}
+            className={i === page ? "on" : ""}
             onClick={() => goTo(i)}
             aria-label={`page ${i + 1}`}
           />

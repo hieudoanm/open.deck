@@ -1,26 +1,41 @@
 {
-  "name": "opendeck-web",
+  "name": "@opendeck/web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "kill-port 5173 || true",
     "dev": "vite",
+    "prebuild": "rimraf dist || true",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint --fix",
+    "lint:check": "eslint"
   },
   "dependencies": {
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "react-icons": "^5.7.0"
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-icons": "5.7.0"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.5",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^5.2.0",
-    "daisyui": "^5.8.3",
-    "tailwindcss": "^4.3.5",
-    "typescript": "~5.9.3",
-    "vite": "^7.3.8"
+    "@eslint/js": "10.0.1",
+    "@tailwindcss/vite": "4.3.5",
+    "@types/react": "19.3.3",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "daisyui": "5.8.3",
+    "eslint": "10.16.0",
+    "eslint-config-prettier": "10.1.9",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "kill-port": "2.0.1",
+    "prettier": "3.10.1",
+    "prettier-plugin-tailwindcss": "0.8.1",
+    "rimraf": "6.1.4",
+    "tailwindcss": "4.3.5",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.74.0",
+    "vite": "8.4.0"
   }
 }

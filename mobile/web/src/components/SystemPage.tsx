@@ -1,10 +1,10 @@
-import { useNow } from '../hooks/useNow';
-import { fmtBytes, fmtRate, fmtUptime } from '../lib/format';
-import type { HelloMsg, StatsMsg, StatusMsg } from '../types';
-import { Widget } from './Widget';
+import { useNow } from "../hooks/useNow";
+import { fmtBytes, fmtRate, fmtUptime } from "../lib/format";
+import type { HelloMsg, StatsMsg, StatusMsg } from "../types";
+import { Widget } from "./Widget";
 
 function Bar({ pct }: { pct: number }) {
-  const cls = pct > 90 ? 'hot' : pct > 70 ? 'warm' : '';
+  const cls = pct > 90 ? "hot" : pct > 70 ? "warm" : "";
   return (
     <div className="bar">
       <i
@@ -18,7 +18,7 @@ function Bar({ pct }: { pct: number }) {
 export function SystemPage({
   stats,
   hello,
-  server
+  server,
 }: {
   stats: StatsMsg | null;
   hello: HelloMsg | null;
@@ -32,20 +32,20 @@ export function SystemPage({
       <div className="grid">
         <Widget label="Time">
           <div className="value clock-value">
-            {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </div>
           <div className="sub">
             {now.toLocaleDateString([], {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric'
+              weekday: "short",
+              month: "short",
+              day: "numeric",
             })}
           </div>
         </Widget>
 
         <Widget label="CPU">
           <div className="value">
-            {s?.cpu_percent != null ? s.cpu_percent.toFixed(0) : '–'}
+            {s?.cpu_percent != null ? s.cpu_percent.toFixed(0) : "–"}
             <small>%</small>
           </div>
           <Bar pct={s?.cpu_percent ?? 0} />
@@ -59,7 +59,7 @@ export function SystemPage({
           <div className="sub">
             {s?.swap_total
               ? `swap ${fmtBytes(s.swap_used)} / ${fmtBytes(s.swap_total)}`
-              : ''}
+              : ""}
           </div>
           <Bar pct={s?.mem_total ? (s.mem_used / s.mem_total) * 100 : 0} />
         </Widget>
@@ -86,8 +86,8 @@ export function SystemPage({
               ? s.net_interfaces
                   .map((i) => i.name)
                   .slice(0, 4)
-                  .join(' · ')
-              : ''}
+                  .join(" · ")
+              : ""}
           </div>
         </Widget>
 
@@ -97,14 +97,14 @@ export function SystemPage({
               ? `${hello.desktop_width}×${hello.desktop_height}`
               : server
                 ? `${server.desktop_width}×${server.desktop_height}`
-                : '–'}
+                : "–"}
           </div>
           <div className="sub">
             {hello
               ? `${hello.stream_width}×${hello.stream_height} stream · ${hello.fps}fps`
               : server
                 ? `${server.fps} fps · ${server.clients} client(s)`
-                : ''}
+                : ""}
           </div>
         </Widget>
 
@@ -114,7 +114,7 @@ export function SystemPage({
               {Math.round(s.battery_percent)}
               <small>%</small>
             </div>
-            <div className="sub">{s.battery_state || ''}</div>
+            <div className="sub">{s.battery_state || ""}</div>
           </Widget>
         )}
       </div>

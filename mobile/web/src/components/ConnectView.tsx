@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 export interface Creds {
   host: string;
@@ -11,7 +11,7 @@ export function ConnectView({
   onChange,
   onConnect,
   status,
-  statusCls
+  statusCls,
 }: {
   creds: Creds;
   onChange: (c: Creds) => void;
@@ -21,15 +21,15 @@ export function ConnectView({
 }) {
   const [connecting, setConnecting] = useState(false);
   return (
-    <div className="h-full flex items-center justify-center p-6">
-      <div className="card w-full max-w-sm bg-base-200 border border-neutral p-7">
-        <h1 className="text-2xl font-bold tracking-tight m-0 mb-1">OpenDeck</h1>
-        <div className="text-sm text-[var(--muted)] mb-5">
+    <div className="flex h-full items-center justify-center p-6">
+      <div className="card bg-base-200 border-neutral w-full max-w-sm border p-7">
+        <h1 className="m-0 mb-1 text-2xl font-bold tracking-tight">OpenDeck</h1>
+        <div className="mb-5 text-sm text-[var(--muted)]">
           Your desktop, at a glance.
         </div>
         <div className="flex gap-2.5">
           <label className="fieldset flex-1">
-            <span className="text-[11px] uppercase tracking-wider text-[var(--muted)] mb-1 block">
+            <span className="mb-1 block text-[11px] tracking-wider text-[var(--muted)] uppercase">
               Host
             </span>
             <input
@@ -41,7 +41,7 @@ export function ConnectView({
             />
           </label>
           <label className="fieldset w-24">
-            <span className="text-[11px] uppercase tracking-wider text-[var(--muted)] mb-1 block">
+            <span className="mb-1 block text-[11px] tracking-wider text-[var(--muted)] uppercase">
               Port
             </span>
             <input
@@ -54,7 +54,7 @@ export function ConnectView({
           </label>
         </div>
         <label className="fieldset mt-3">
-          <span className="text-[11px] uppercase tracking-wider text-[var(--muted)] mb-1 block">
+          <span className="mb-1 block text-[11px] tracking-wider text-[var(--muted)] uppercase">
             Pairing token
           </span>
           <input
@@ -66,21 +66,21 @@ export function ConnectView({
           />
         </label>
         <button
-          className="btn btn-primary w-full mt-1.5"
+          className="btn btn-primary mt-1.5 w-full"
           disabled={connecting}
           onClick={() => {
             setConnecting(true);
             onConnect();
           }}
         >
-          {connecting ? 'Connecting…' : 'Connect'}
+          {connecting ? "Connecting…" : "Connect"}
         </button>
         <div
-          className={`text-[12.5px] text-center mt-3 min-h-[18px] ${statusCls}`}
+          className={`mt-3 min-h-[18px] text-center text-[12.5px] ${statusCls}`}
         >
           {status}
         </div>
-        <div className="text-[11.5px] text-[var(--muted)] text-center mt-4">
+        <div className="mt-4 text-center text-[11.5px] text-[var(--muted)]">
           Same Wi-Fi as your computer · free &amp; local
         </div>
       </div>

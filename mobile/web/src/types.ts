@@ -1,5 +1,5 @@
 export interface HelloMsg {
-  type: 'hello';
+  type: "hello";
   desktop_width: number;
   desktop_height: number;
   stream_width: number;
