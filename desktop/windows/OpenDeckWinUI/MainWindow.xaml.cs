@@ -258,7 +258,7 @@ public sealed partial class MainWindow : Window
             var list = JsonSerializer.Deserialize<List<ActionItem>>(actionsJson,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new();
             if (_actions.Count != list.Count ||
-                !_actions.Select((a, i) => a.Name == list[i].Name).SequenceEqual(list.Select(a => a.Name)))
+                !_actions.Select(a => a.Name).SequenceEqual(list.Select(a => a.Name)))
             {
                 _actions.Clear();
                 foreach (var a in list) _actions.Add(a);
