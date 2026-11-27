@@ -11,6 +11,10 @@ xcodegen generate              # regenerate OpenDeck.xcodeproj after editing pro
 xcodebuild -project OpenDeck.xcodeproj -scheme OpenDeck \
   -destination 'generic/platform=iOS Simulator' \
   -configuration Debug CODE_SIGNING_ALLOWED=NO build
+# tests (Swift Testing, needs a concrete simulator destination):
+xcodebuild -project OpenDeck.xcodeproj -scheme OpenDeck \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -configuration Debug test CODE_SIGNING_ALLOWED=NO
 ```
 
 ## Structure
@@ -56,12 +60,21 @@ xcodebuild -project OpenDeck.xcodeproj -scheme OpenDeck \
   Ports/Apps views.
 - `OpenDeck/Clipboard/` — `UIPasteboard` history viewer: `ClipboardStore`,
   `ClipboardView`.
-- `OpenDeck/NFC/` — NFC toolkit, parity with Android's `Nfc.kt`:
+- `OpenDeck/NFC/` — NFC toolkit, parity with omni's `packages/mobile/ios`:
   `NdefCodec.swift` (pure NDEF parse/serialize — URI prefix table, text
   status byte, Smart Poster), `NdefPayload`/`NdefRecord`/`TagInfo` models,
+  `NdefRecord` history-JSON coding (same DTO shape Android/omni persist),
   `NfcService.swift` (`NFCTagReaderSession` wrapper; reads/writes are
   user-initiated `async` one-shots, iOS has no ambient dispatch),
+  `TagHistoryStore.swift` (scan history — JSON file in Application Support;
+  omni uses SwiftData but that needs iOS 17 and we target 16),
+  `SettingsStore.swift` (UserDefaults `auto_open_url`/`dark_mode` —
+  `ObservableObject` instead of `@Observable`, same keys/defaults),
+  `HistoryView.swift`/`SettingsView.swift` (sheets off `NfcView`'s toolbar),
   `NfcView.swift` (scan/write UI mirroring Android's `NfcScreen`).
+- `OpenDeckTests/` — Swift Testing suites ported from omni's OmniTests:
+  `NdefCodecTests`, `NdefRecordCodableTests`, `SettingsStoreTests`
+  (`xcodebuild test`, see Commands).
 - Deep links — `opendeck://connect?host=…&port=…&token=…` (the desktop QR
   payload) is registered via `CFBundleURLTypes` in `project.yml`/`Info.plist`
   and handled by `DeckModel.handleOpenURL`; keep the scheme in sync with the

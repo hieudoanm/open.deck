@@ -40,10 +40,14 @@ data class ClipItem(
 
 /// Clipboard history — Android counterpart of the iOS ClipboardStore.
 /// Android's ClipboardManager has no changeCount, so we poll the primary
-/// clip's text and dedupe on change.
+/// clip's text and dedupe on change. Persisted to filesDir/clipboard.json
+/// (iOS parity).
 class ClipboardMonitor(private val context: Context) {
     val items = mutableStateListOf<ClipItem>()
     private var lastClip: String? = null
+    private val file = java.io.File(context.filesDir, "clipboard.json")
+
+    init { load() }
 
     fun poll() {
         val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -65,6 +69,38 @@ class ClipboardMonitor(private val context: Context) {
             items.add(0, ClipItem(content = content, isUrl = isUrl))
         }
         while (items.size > 100) items.removeAt(items.lastIndex)
+        save()
+    }
+
+    private fun save() {
+        try {
+            val arr = org.json.JSONArray()
+            items.forEach { i ->
+                arr.put(org.json.JSONObject()
+                    .put("id", i.id).put("content", i.content)
+                    .put("isUrl", i.isUrl).put("pinned", i.pinned)
+                    .put("createdAt", i.createdAt).put("copiedCount", i.copiedCount))
+            }
+            file.writeText(arr.toString())
+        } catch (_: Exception) {}
+    }
+
+    private fun load() {
+        try {
+            val arr = org.json.JSONArray(file.readText())
+            val list = (0 until arr.length()).map { i ->
+                val o = arr.getJSONObject(i)
+                ClipItem(
+                    id = o.optString("id").ifEmpty { UUID.randomUUID().toString() },
+                    content = o.optString("content"),
+                    isUrl = o.optBoolean("isUrl"),
+                    pinned = o.optBoolean("pinned"),
+                    createdAt = o.optLong("createdAt"),
+                    copiedCount = o.optInt("copiedCount", 1),
+                )
+            }
+            items.addAll(list)
+        } catch (_: Exception) {}
     }
 
     fun copy(item: ClipItem) {
@@ -75,15 +111,20 @@ class ClipboardMonitor(private val context: Context) {
 
     fun togglePin(item: ClipItem) {
         val i = items.indexOfFirst { it.id == item.id }
-        if (i >= 0) items[i] = item.copy(pinned = !item.pinned)
+        if (i >= 0) {
+            items[i] = item.copy(pinned = !item.pinned)
+            save()
+        }
     }
 
     fun delete(item: ClipItem) {
         items.removeAll { it.id == item.id }
+        save()
     }
 
     fun clearUnpinned() {
         items.removeAll { !it.pinned }
+        save()
     }
 }
 
@@ -153,6 +194,9 @@ fun ClipboardScreen() {
                         }
                         TextButton(onClick = { monitor.togglePin(item) }) {
                             Text(if (item.pinned) "Unpin" else "Pin", fontSize = 11.sp)
+                        }
+                        TextButton(onClick = { monitor.delete(item) }) {
+                            Text("Delete", fontSize = 11.sp, color = Color.Red)
                         }
                     }
                     HorizontalDivider(color = Color(0xFF2A2F36))

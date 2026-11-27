@@ -8,14 +8,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 
-class DeckViewModel : ViewModel() {
+class DeckViewModel(app: Application) : AndroidViewModel(app) {
     var host by mutableStateOf("")
     var port by mutableStateOf("47821")
     var token by mutableStateOf("")
@@ -37,6 +38,10 @@ class DeckViewModel : ViewModel() {
     var writeAsUri by mutableStateOf(true)
     var writeValue by mutableStateOf("")
     private var pendingWrite = false
+
+    // NFC history + settings — parity with iOS DeckModel.history/.settings.
+    val nfcHistory = TagHistoryStore(app)
+    val settings = SettingsStore(app)
 
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var client: DeckClient? = null
@@ -116,6 +121,7 @@ class DeckViewModel : ViewModel() {
             val info = NfcTags.inspect(tag)
             viewModelScope.launch(Dispatchers.Main) {
                 nfcBusy = false
+                nfcHistory.record(info)
                 if (info.connectUri != null) {
                     applyConnectUri(info.connectUri)
                     nfcMessage = "Pairing details filled — tap Connect"
@@ -123,9 +129,25 @@ class DeckViewModel : ViewModel() {
                     nfcInfo = info
                     nfcMessage = null
                     page = DeckPage.NFC
+                    if (settings.autoOpenUrl) {
+                        firstWebUrl(info)?.let { openExternal(it) }
+                    }
                 }
             }
         }
+    }
+
+    /// First `URI: http(s)://…` record on the tag — used by the
+    /// "auto-open URLs" setting (iOS `firstOpenableURL` parity).
+    private fun firstWebUrl(info: NfcTagInfo): String? =
+        info.records.firstOrNull {
+            it.startsWith("URI: http://") || it.startsWith("URI: https://")
+        }?.removePrefix("URI: ")
+
+    private fun openExternal(url: String) {
+        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        getApplication<Application>().startActivity(intent)
     }
 
     /// Arm a pending write; the next scanned tag receives [writeValue].

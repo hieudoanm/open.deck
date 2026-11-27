@@ -5,6 +5,8 @@ import SwiftUI
 /// and "Write" buttons each present the system scanning UI.
 struct NfcView: View {
     @ObservedObject var model: DeckModel
+    @State private var showHistory = false
+    @State private var showSettings = false
 
     var body: some View {
         VStack(spacing: 12) {
@@ -14,7 +16,19 @@ struct NfcView: View {
                 Text("NFC Tools")
                     .font(.headline)
                 Spacer()
-                Text("").frame(width: 60)
+                HStack(spacing: 8) {
+                    Button {
+                        showHistory = true
+                    } label: {
+                        Image(systemName: "clock.arrow.circlepath")
+                    }
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                }
+                .font(.body)
             }
 
             if model.nfcBusy {
@@ -77,6 +91,12 @@ struct NfcView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(24)
+        .sheet(isPresented: $showHistory) {
+            HistoryView(store: model.history)
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView(settings: model.settings)
+        }
     }
 
     private func tagCard(_ info: TagInfo) -> some View {

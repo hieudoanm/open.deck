@@ -24,6 +24,8 @@ final class DeckModel: ObservableObject {
     @Published var writeValue = ""
 
     let nfcService = NfcService()
+    let settings = SettingsStore()
+    let history = TagHistoryStore()
 
     private let client = DeckClient()
 
@@ -86,6 +88,20 @@ final class DeckModel: ObservableObject {
         return nil
     }
 
+    /// First web URL on the tag — used by the "auto-open URLs" setting
+    /// (omni/Android `auto_open_url` parity).
+    private static func firstOpenableURL(in info: TagInfo) -> URL? {
+        for record in info.ndefRecords {
+            if case let .uri(uri) = record,
+               uri.hasPrefix("http://") || uri.hasPrefix("https://"),
+               let url = URL(string: uri)
+            {
+                return url
+            }
+        }
+        return nil
+    }
+
     func openNfc() {
         if nfcMessage == nil {
             nfcMessage = "Tap Scan, then hold your iPhone near a tag"
@@ -107,6 +123,7 @@ final class DeckModel: ObservableObject {
         do {
             let info = try await nfcService.readTag()
             nfcBusy = false
+            history.record(info)
             if let uri = Self.connectURI(in: info), let url = URL(string: uri) {
                 handleOpenURL(url)
                 page = .deck
@@ -114,6 +131,9 @@ final class DeckModel: ObservableObject {
             } else {
                 nfcInfo = info
                 nfcMessage = nil
+                if settings.autoOpenUrl, let url = Self.firstOpenableURL(in: info) {
+                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                }
             }
         } catch {
             nfcBusy = false

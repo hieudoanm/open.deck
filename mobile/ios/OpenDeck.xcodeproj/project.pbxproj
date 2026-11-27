@@ -7,19 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		059A19988165C89EF3BB6316 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4627A3A79BEA6106F1E871D8 /* SettingsView.swift */; };
 		0B63998FA84DFE2A7D921B1C /* NdefRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7993B9BCD7144E53989A0670 /* NdefRecord.swift */; };
 		1130192C3766FC6DF5E08D18 /* DeckPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26129C4710FFA5AAE6AAC14C /* DeckPagerView.swift */; };
 		1792024D774B4063068EF5EC /* ClockViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7187E925DC7886DBAF28C2C8 /* ClockViews.swift */; };
 		1D72DF0453A7ECD8D54EF9AD /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AF3D914794D99A872FA3006 /* ClipboardStore.swift */; };
 		232ADE5535ADD6897F9674A1 /* NdefCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD47397DB618F39DD183D3B3 /* NdefCodec.swift */; };
+		2DAFDA9875D85236DCD16C66 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD46546B9902CA0C6C2E0C79 /* HistoryView.swift */; };
 		3D2CE5D98FE99C6E6BF66242 /* OpenDeckApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827F6D7A6B79BE150B73D89D /* OpenDeckApp.swift */; };
 		405AAD69C301E4990144E3C6 /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF690220B94E1BEABB52FDE2 /* ConnectView.swift */; };
 		40929FC5E81C74CFA1169A1E /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3882AF2C60FF97FF1832BAC /* WeatherService.swift */; };
 		4186AE318A62ECDEC39B8376 /* NfcService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D88CD2BB3A5DA58FF6B0817 /* NfcService.swift */; };
 		43FE03F99D4597E0BFC561A9 /* Chime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236667353AE8ACDD3C173D88 /* Chime.swift */; };
+		459C54EC2EBEB48B14F0B3EA /* NdefCodecTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3099471A605DDA1C23078053 /* NdefCodecTests.swift */; };
 		45DE9D27A5D62EFD210E0F46 /* PortsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3FEB808E8621410208C0CEB /* PortsView.swift */; };
 		45FF81F590742DEFF6E51E7C /* ClipboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54060EC795926EBC0F03F288 /* ClipboardView.swift */; };
+		4891F4DED5F76464BD3C012D /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B68A10908AF38045B57F200 /* SettingsStore.swift */; };
 		542C70EAC67771DE150F40BE /* AppsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E9C512238FF681E97E953B7 /* AppsView.swift */; };
+		5ACBDABBE9928766121E3DD5 /* TagHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8450EB1BDA5E92E4A8E3D308 /* TagHistoryStore.swift */; };
+		5AEE93DFF1722A23ED581F96 /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5756A86621DCA02F0BD90E29 /* SettingsStoreTests.swift */; };
 		60EC57FC27F6A0D5F46E310B /* SystemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39586383884E0FDFBFCE6385 /* SystemViewModel.swift */; };
 		610C5A0C0FAB5EEC32FF3EDE /* ClockViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07AA345FCF975B3B988F644 /* ClockViewModels.swift */; };
 		610DAE39418A42EEFDFE24E8 /* DeckModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7273439DA5731A90426FC837 /* DeckModel.swift */; };
@@ -30,6 +36,7 @@
 		8E7E23060659977B32C3F8B0 /* NdefPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42129EB865E6CD4FCE95DD21 /* NdefPayload.swift */; };
 		94E409AF9316DFD7E4067A27 /* StreamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F84C30DC02BDDE1E3082C09 /* StreamView.swift */; };
 		99D03B27EC0E68399CFA14CF /* IPView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99202B9AD1C86E63B31F97F2 /* IPView.swift */; };
+		9E63E5B269F3E79D09520E87 /* NdefRecordCodableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41FBC6DD166760AD02233846 /* NdefRecordCodableTests.swift */; };
 		A5FEBDA4972C7D8EC92D7CAE /* ClockModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C580C3E887112F52C5E23D /* ClockModels.swift */; };
 		D520B1B0B5D03C3147B47BD2 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7159CE09E9C2B70AE02BF241 /* Theme.swift */; };
 		D8EB9B4DFDD9EEC9356B58CF /* TagInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE70EC9BB30FB61D7A246E7 /* TagInfo.swift */; };
@@ -41,6 +48,16 @@
 		EF175E7A13804056DBC91E24 /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90EDB313C5C88B45887765D /* SystemMonitor.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		A1304300FCEB427EC84900F7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = EA0B00C08BB808166DD3ECD9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A0A1EB729E4FD3AFA23A7491;
+			remoteInfo = OpenDeck;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		003E86F76FFE5F34E8266046 /* DeckClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckClient.swift; sourceTree = "<group>"; };
 		01324145BD5E99E397DA6D42 /* HostModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostModels.swift; sourceTree = "<group>"; };
@@ -49,10 +66,15 @@
 		236667353AE8ACDD3C173D88 /* Chime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chime.swift; sourceTree = "<group>"; };
 		26129C4710FFA5AAE6AAC14C /* DeckPagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckPagerView.swift; sourceTree = "<group>"; };
 		2DE70EC9BB30FB61D7A246E7 /* TagInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagInfo.swift; sourceTree = "<group>"; };
+		3099471A605DDA1C23078053 /* NdefCodecTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NdefCodecTests.swift; sourceTree = "<group>"; };
 		39586383884E0FDFBFCE6385 /* SystemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemViewModel.swift; sourceTree = "<group>"; };
+		41FBC6DD166760AD02233846 /* NdefRecordCodableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NdefRecordCodableTests.swift; sourceTree = "<group>"; };
 		42129EB865E6CD4FCE95DD21 /* NdefPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NdefPayload.swift; sourceTree = "<group>"; };
+		4627A3A79BEA6106F1E871D8 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		4B68A10908AF38045B57F200 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		50C580C3E887112F52C5E23D /* ClockModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockModels.swift; sourceTree = "<group>"; };
 		54060EC795926EBC0F03F288 /* ClipboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardView.swift; sourceTree = "<group>"; };
+		5756A86621DCA02F0BD90E29 /* SettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
 		6F4A7076B8B6D7FD83C855B0 /* OpenDeck.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OpenDeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7159CE09E9C2B70AE02BF241 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		7187E925DC7886DBAF28C2C8 /* ClockViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockViews.swift; sourceTree = "<group>"; };
@@ -61,6 +83,7 @@
 		7B458276D4A0949E533DE7B7 /* ClockFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockFormatters.swift; sourceTree = "<group>"; };
 		7E9C512238FF681E97E953B7 /* AppsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppsView.swift; sourceTree = "<group>"; };
 		827F6D7A6B79BE150B73D89D /* OpenDeckApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDeckApp.swift; sourceTree = "<group>"; };
+		8450EB1BDA5E92E4A8E3D308 /* TagHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagHistoryStore.swift; sourceTree = "<group>"; };
 		8D38E96DFBE587AB4728C68E /* IPViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPViewModel.swift; sourceTree = "<group>"; };
 		8D88CD2BB3A5DA58FF6B0817 /* NfcService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NfcService.swift; sourceTree = "<group>"; };
 		8E9D9936D1B92851F036E0A2 /* ByteFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteFormatter.swift; sourceTree = "<group>"; };
@@ -74,6 +97,8 @@
 		C07AA345FCF975B3B988F644 /* ClockViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockViewModels.swift; sourceTree = "<group>"; };
 		C90EDB313C5C88B45887765D /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
 		CF5C239FD8104A32304C9685 /* IPModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPModels.swift; sourceTree = "<group>"; };
+		DA9B21E70C3DC09C57D3A1A5 /* OpenDeckTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = OpenDeckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DD46546B9902CA0C6C2E0C79 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
 		DD47397DB618F39DD183D3B3 /* NdefCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NdefCodec.swift; sourceTree = "<group>"; };
 		E3FEB808E8621410208C0CEB /* PortsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortsView.swift; sourceTree = "<group>"; };
 		FF690220B94E1BEABB52FDE2 /* ConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
@@ -104,6 +129,7 @@
 			isa = PBXGroup;
 			children = (
 				6F4A7076B8B6D7FD83C855B0 /* OpenDeck.app */,
+				DA9B21E70C3DC09C57D3A1A5 /* OpenDeckTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -134,11 +160,15 @@
 		534E0A45225B8D0D82E42502 /* NFC */ = {
 			isa = PBXGroup;
 			children = (
+				DD46546B9902CA0C6C2E0C79 /* HistoryView.swift */,
 				DD47397DB618F39DD183D3B3 /* NdefCodec.swift */,
 				42129EB865E6CD4FCE95DD21 /* NdefPayload.swift */,
 				7993B9BCD7144E53989A0670 /* NdefRecord.swift */,
 				8D88CD2BB3A5DA58FF6B0817 /* NfcService.swift */,
 				177E0D88B07D1461398126F9 /* NfcView.swift */,
+				4B68A10908AF38045B57F200 /* SettingsStore.swift */,
+				4627A3A79BEA6106F1E871D8 /* SettingsView.swift */,
+				8450EB1BDA5E92E4A8E3D308 /* TagHistoryStore.swift */,
 				2DE70EC9BB30FB61D7A246E7 /* TagInfo.swift */,
 			);
 			path = NFC;
@@ -161,6 +191,7 @@
 			isa = PBXGroup;
 			children = (
 				4DB0664DBCCA6B052B0ABED3 /* OpenDeck */,
+				E0D884F655E2CF90462C5815 /* OpenDeckTests */,
 				4C6ECFDFDDC01E8E625033F8 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -176,6 +207,16 @@
 			path = System;
 			sourceTree = "<group>";
 		};
+		E0D884F655E2CF90462C5815 /* OpenDeckTests */ = {
+			isa = PBXGroup;
+			children = (
+				3099471A605DDA1C23078053 /* NdefCodecTests.swift */,
+				41FBC6DD166760AD02233846 /* NdefRecordCodableTests.swift */,
+				5756A86621DCA02F0BD90E29 /* SettingsStoreTests.swift */,
+			);
+			path = OpenDeckTests;
+			sourceTree = "<group>";
+		};
 		E86561F9244A95AB66DC3B4C /* Clipboard */ = {
 			isa = PBXGroup;
 			children = (
@@ -188,6 +229,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		143BE57BB3559B54620F6BCF /* OpenDeckTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A34BE44D0FAD7596691CCF76 /* Build configuration list for PBXNativeTarget "OpenDeckTests" */;
+			buildPhases = (
+				3C6B3BAE6DDFDBF940408958 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EB72E313C4AA438010D1BF5F /* PBXTargetDependency */,
+			);
+			name = OpenDeckTests;
+			packageProductDependencies = (
+			);
+			productName = OpenDeckTests;
+			productReference = DA9B21E70C3DC09C57D3A1A5 /* OpenDeckTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		A0A1EB729E4FD3AFA23A7491 /* OpenDeck */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = EF3837EE530EDFCD175A1DC0 /* Build configuration list for PBXNativeTarget "OpenDeck" */;
@@ -231,11 +290,22 @@
 			projectRoot = "";
 			targets = (
 				A0A1EB729E4FD3AFA23A7491 /* OpenDeck */,
+				143BE57BB3559B54620F6BCF /* OpenDeckTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		3C6B3BAE6DDFDBF940408958 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				459C54EC2EBEB48B14F0B3EA /* NdefCodecTests.swift in Sources */,
+				9E63E5B269F3E79D09520E87 /* NdefRecordCodableTests.swift in Sources */,
+				5AEE93DFF1722A23ED581F96 /* SettingsStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B6780FB09F1B72D58A3C845F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -254,6 +324,7 @@
 				E92F66CC79AE4735C311E366 /* DeckClient.swift in Sources */,
 				610DAE39418A42EEFDFE24E8 /* DeckModel.swift in Sources */,
 				1130192C3766FC6DF5E08D18 /* DeckPagerView.swift in Sources */,
+				2DAFDA9875D85236DCD16C66 /* HistoryView.swift in Sources */,
 				DD485BCC642871BDCEA53228 /* HostModels.swift in Sources */,
 				D9F68F848A8C10A1BAFEAEAE /* IPModels.swift in Sources */,
 				99D03B27EC0E68399CFA14CF /* IPView.swift in Sources */,
@@ -265,10 +336,13 @@
 				EE2BD0FBDD41DBDA3BD0F3CD /* NfcView.swift in Sources */,
 				3D2CE5D98FE99C6E6BF66242 /* OpenDeckApp.swift in Sources */,
 				45DE9D27A5D62EFD210E0F46 /* PortsView.swift in Sources */,
+				4891F4DED5F76464BD3C012D /* SettingsStore.swift in Sources */,
+				059A19988165C89EF3BB6316 /* SettingsView.swift in Sources */,
 				94E409AF9316DFD7E4067A27 /* StreamView.swift in Sources */,
 				EF175E7A13804056DBC91E24 /* SystemMonitor.swift in Sources */,
 				7C8955D608B790C444EED359 /* SystemView.swift in Sources */,
 				60EC57FC27F6A0D5F46E310B /* SystemViewModel.swift in Sources */,
+				5ACBDABBE9928766121E3DD5 /* TagHistoryStore.swift in Sources */,
 				D8EB9B4DFDD9EEC9356B58CF /* TagInfo.swift in Sources */,
 				D520B1B0B5D03C3147B47BD2 /* Theme.swift in Sources */,
 				40929FC5E81C74CFA1169A1E /* WeatherService.swift in Sources */,
@@ -276,6 +350,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		EB72E313C4AA438010D1BF5F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A0A1EB729E4FD3AFA23A7491 /* OpenDeck */;
+			targetProxy = A1304300FCEB427EC84900F7 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		001E211ED00277D73B7EE826 /* Debug */ = {
@@ -359,6 +441,26 @@
 			};
 			name = Debug;
 		};
+		84D5F0CFD8A1BE84AB42DEEB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.opendeck.app.tests;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OpenDeck.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OpenDeck";
+			};
+			name = Release;
+		};
 		98F52BBB541865E4B8C6B530 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -377,6 +479,26 @@
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
+		};
+		D0DC8B072C04EA3538E9FD33 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.opendeck.app.tests;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/OpenDeck.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/OpenDeck";
+			};
+			name = Debug;
 		};
 		DFA4777BC65BD6BEFC96EE2C /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -436,6 +558,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		A34BE44D0FAD7596691CCF76 /* Build configuration list for PBXNativeTarget "OpenDeckTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D0DC8B072C04EA3538E9FD33 /* Debug */,
+				84D5F0CFD8A1BE84AB42DEEB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
 		B280E9DA4CE81F80B056D1E9 /* Build configuration list for PBXProject "OpenDeck" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -23,11 +23,14 @@ Requires JDK 17+ and the Android SDK (`compileSdk = 35`, `minSdk = 26`).
   with `org.json`. Exposes `connect(url)`, `disconnect()`, `send(json)`,
   `sendMouseMove`, `sendMouseButton`, `sendKey`, and an `onStats` callback
   for server `{"type":"stats"}` host-metrics frames (~2s cadence).
-- `DeckViewModel.kt` — `ViewModel` owning form state (`host`, `port`,
-  `token`), `ConnState`, latest `ImageBitmap` frame, `HelloInfo`,
-  `desktopStats`, `page` (`DeckPage`), `focusMode`, and NFC UI state
-  (`nfcInfo`, `nfcBusy`, `writeAsUri`/`writeValue`, `pendingWrite`);
-  publishes `SessionState.deckConnected` for the accessibility service.
+- `DeckViewModel.kt` — `AndroidViewModel` owning form state (`host`,
+  `port`, `token`), `ConnState`, latest `ImageBitmap` frame, `HelloInfo`,
+  `desktopStats`, `page` (`DeckPage`), `focusMode`, NFC UI state
+  (`nfcInfo`, `nfcBusy`, `writeAsUri`/`writeValue`, `pendingWrite`), and
+  the `nfcHistory`/`settings` stores; publishes
+  `SessionState.deckConnected` for the accessibility service.
+  `onTagScanned` records every read to `nfcHistory` and auto-opens the
+  first http(s) URI record when `settings.autoOpenUrl` is on.
 - `MainActivity.kt` — `HorizontalPager` over `DeckPage` (deck/clock/system/
   ip/ports/apps/clipboard/nfc) with tappable dots — parity with iOS `DeckPagerView`;
   plus input mapping:
@@ -54,8 +57,18 @@ Requires JDK 17+ and the Android SDK (`compileSdk = 35`, `minSdk = 26`).
 - `ClipboardScreen.kt` — clipboard history viewer (`ClipboardManager`);
   parity with iOS `Clipboard/`.
 - `Nfc.kt` — NFC toolkit (ported from omni, no DI): `NfcTags.inspect/write`
-  for NDEF read/write with URI/text/MIME record decoding, and
-  `NfcDispatcher` wrapping `enableForegroundDispatch`.
+  for NDEF read/write with URI/text/MIME record decoding (record strings
+  are prefixed `URI: `/`Text: ` — strip `URI: ` before scheme checks),
+  `NfcTagInfo.uid` from `tag.id`, and `NfcDispatcher` wrapping
+  `enableForegroundDispatch`.
+- `NfcHistory.kt` — `TagHistoryStore` (JSON file `filesDir/nfc-history.json`,
+  500-entry cap — iOS `TagHistoryStore` parity) and `SettingsStore`
+  (SharedPreferences `opendeck_settings`: `auto_open_url`, `dark_mode`,
+  same keys/defaults as iOS `SettingsStore`).
+- `MainActivity.kt` — `NfcScreen` has History/Settings dialogs
+  (`NfcHistoryDialog`/`NfcSettingsDialog`) mirroring iOS `HistoryView`/
+  `SettingsView` sheets; `dark_mode` switches `MaterialTheme` between
+  `darkColorScheme()`/`lightColorScheme()`.
 - `Focus.kt` / `OpenDeckAccessibilityService.kt` — session focus mode:
   while connected and enabled, leaving OpenDeck brings it back via
   `TYPE_WINDOW_STATE_CHANGED` events. `FocusMode` persists the setting;
@@ -69,7 +82,10 @@ Requires JDK 17+ and the Android SDK (`compileSdk = 35`, `minSdk = 26`).
   server.
 - `mouse_move` takes **absolute desktop pixels**, not normalized coords —
   always scale through the `hello` frame's `desktop_*`/`stream_*` fields.
-- Compose-only UI, dark `MaterialTheme` color scheme, no XML layouts.
+- Compose-only UI, Material 3 color scheme (dark default; `dark_mode`
+  setting selects dark/light), no XML layouts.
+- `ClipboardMonitor` persists history to `filesDir/clipboard.json` and
+  exposes pin/delete/clearUnpinned — parity with iOS `ClipboardStore`.
 - `usesCleartextTraffic="true"` is required for `ws://`; do not add remote
   endpoints or weaken the pairing-token flow.
 - Treat tokens as secrets — never log them.

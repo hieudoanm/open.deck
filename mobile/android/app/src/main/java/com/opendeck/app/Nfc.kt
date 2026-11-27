@@ -14,11 +14,14 @@ import java.nio.charset.StandardCharsets
 
 /** Human-readable summary of a scanned tag. */
 data class NfcTagInfo(
+    val uid: String,
     val techs: List<String>,
     val records: List<String>,
     /// First `opendeck://…` URI record found, if any (tap-to-pair payload).
     val connectUri: String?,
-)
+) {
+    val techSummary: String get() = techs.joinToString(", ")
+}
 
 object NfcTags {
 
@@ -28,11 +31,13 @@ object NfcTags {
         readMessage(tag)?.records?.forEach { record ->
             val text = describeRecord(record)
             records += text
-            if (connectUri == null && text.startsWith("opendeck://")) {
-                connectUri = text
+            // describeRecord prefixes URIs with "URI: " — strip it for matching.
+            if (connectUri == null && text.startsWith("URI: opendeck://")) {
+                connectUri = text.removePrefix("URI: ")
             }
         }
         return NfcTagInfo(
+            uid = tag.id?.joinToString("") { "%02X".format(it) } ?: "",
             techs = tag.techList.map { it.substringAfterLast('.') },
             records = records,
             connectUri = connectUri,

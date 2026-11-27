@@ -13,6 +13,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -28,6 +30,7 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.shape.CircleShape
@@ -48,8 +51,13 @@ class MainActivity : ComponentActivity() {
         nfc = NfcDispatcher(this) { tag -> vm.onTagScanned(tag) }
         handleIncoming(intent)
         setContent {
-            MaterialTheme(colorScheme = darkColorScheme()) {
-                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
+            // Settings → Dark mode (iOS SettingsStore.darkMode parity).
+            val dark = vm.settings.darkMode
+            MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
                     DeckPager(vm)
                 }
             }
@@ -391,6 +399,8 @@ fun DeckScreen(vm: DeckViewModel) {
 
 @Composable
 fun NfcScreen(vm: DeckViewModel) {
+    var showHistory by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -404,7 +414,10 @@ fun NfcScreen(vm: DeckViewModel) {
         ) {
             TextButton(onClick = { vm.closeNfc() }) { Text("← Back") }
             Text("NFC Tools", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.width(8.dp))
+            Row {
+                TextButton(onClick = { showHistory = true }) { Text("History") }
+                TextButton(onClick = { showSettings = true }) { Text("Settings") }
+            }
         }
 
         if (vm.nfcBusy) {
@@ -417,9 +430,16 @@ fun NfcScreen(vm: DeckViewModel) {
         vm.nfcInfo?.let { info ->
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (info.uid.isNotEmpty()) {
+                        Text(
+                            "UID: ${info.uid}",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontFamily = FontFamily.Monospace,
+                        )
+                    }
                     Text("Technologies", style = MaterialTheme.typography.labelMedium)
                     Text(
-                        info.techs.joinToString(", "),
+                        info.techSummary,
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray,
                     )
@@ -474,6 +494,111 @@ fun NfcScreen(vm: DeckViewModel) {
             color = Color.DarkGray,
         )
     }
+
+    if (showHistory) {
+        NfcHistoryDialog(vm.nfcHistory) { showHistory = false }
+    }
+    if (showSettings) {
+        NfcSettingsDialog(vm.settings) { showSettings = false }
+    }
+}
+
+/// Scan history — parity with iOS `HistoryView`.
+@Composable
+private fun NfcHistoryDialog(store: TagHistoryStore, onClose: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = { Text("History") },
+        text = {
+            if (store.items.isEmpty()) {
+                Text("No tags scanned yet", color = Color.Gray)
+            } else {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
+                    store.items.forEach { item ->
+                        Column(Modifier.padding(vertical = 6.dp)) {
+                            Text(
+                                "UID: ${item.uid.ifEmpty { "—" }}",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            )
+                            Text(
+                                item.techSummary,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.Gray,
+                            )
+                            Text(
+                                java.text.SimpleDateFormat("MMM dd, yyyy HH:mm", java.util.Locale.US)
+                                    .format(java.util.Date(item.scannedAt)),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.DarkGray,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Row {
+                if (store.items.isNotEmpty()) {
+                    TextButton(onClick = { store.clear() }) {
+                        Text("Clear", color = Color.Red)
+                    }
+                }
+                TextButton(onClick = onClose) { Text("Done") }
+            }
+        },
+    )
+}
+
+/// NFC settings — parity with iOS `SettingsView`.
+@Composable
+private fun NfcSettingsDialog(settings: SettingsStore, onClose: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onClose,
+        title = { Text("Settings") },
+        text = {
+            Column {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Auto-open URLs", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Automatically open URLs when scanning a tag",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                        )
+                    }
+                    Switch(
+                        checked = settings.autoOpenUrl,
+                        onCheckedChange = { settings.setAutoOpenUrl(it) },
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Dark mode", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            "Use dark theme",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                        )
+                    }
+                    Switch(
+                        checked = settings.darkMode,
+                        onCheckedChange = { settings.setDarkMode(it) },
+                    )
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onClose) { Text("Done") } },
+    )
 }
 
 @Composable
