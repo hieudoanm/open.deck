@@ -7,17 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		372DD736A2FE83DB891ABDD4 /* OpenDeckApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B9FFC3E4AD0EE65884CE5B2 /* OpenDeckApp.swift */; };
 		40A17E43FC5CCE001FFC34F5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76537E2C743A02DBBCD83C2C /* ContentView.swift */; };
 		4E621329784FB3890E8D22D7 /* ServerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97A9C6F5DF9906D23670375E /* ServerManager.swift */; };
-		B26C5C3B8506B270598AC17F /* OpenDeckMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEC106D913F5EC8F6CD2B4D2 /* OpenDeckMacApp.swift */; };
+		4FC05851D42A1A6E594ACBFE /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B4B2FCB46038827C9B4F3D /* Models.swift */; };
+		7E4FE8F12C0D943C2D3BE219 /* Permissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6289240481F67EC03DCE04EC /* Permissions.swift */; };
+		E8132CD9100CE2E71999CF97 /* QRCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E28367B3002EA6EEF16B1DA /* QRCodeView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0B403FCB4A7BC92FE3DA28F6 /* OpenDeckMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenDeckMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1B9FFC3E4AD0EE65884CE5B2 /* OpenDeckApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDeckApp.swift; sourceTree = "<group>"; };
 		2BAB6C19C955A8F223F68819 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		4E28367B3002EA6EEF16B1DA /* QRCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeView.swift; sourceTree = "<group>"; };
+		6289240481F67EC03DCE04EC /* Permissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Permissions.swift; sourceTree = "<group>"; };
 		76537E2C743A02DBBCD83C2C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		97A9C6F5DF9906D23670375E /* ServerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerManager.swift; sourceTree = "<group>"; };
-		EEC106D913F5EC8F6CD2B4D2 /* OpenDeckMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDeckMacApp.swift; sourceTree = "<group>"; };
+		C3B4B2FCB46038827C9B4F3D /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -26,7 +32,10 @@
 			children = (
 				76537E2C743A02DBBCD83C2C /* ContentView.swift */,
 				2BAB6C19C955A8F223F68819 /* Info.plist */,
-				EEC106D913F5EC8F6CD2B4D2 /* OpenDeckMacApp.swift */,
+				C3B4B2FCB46038827C9B4F3D /* Models.swift */,
+				1B9FFC3E4AD0EE65884CE5B2 /* OpenDeckApp.swift */,
+				6289240481F67EC03DCE04EC /* Permissions.swift */,
+				4E28367B3002EA6EEF16B1DA /* QRCodeView.swift */,
 				97A9C6F5DF9906D23670375E /* ServerManager.swift */,
 			);
 			path = OpenDeckMac;
@@ -104,7 +113,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				40A17E43FC5CCE001FFC34F5 /* ContentView.swift in Sources */,
-				B26C5C3B8506B270598AC17F /* OpenDeckMacApp.swift in Sources */,
+				4FC05851D42A1A6E594ACBFE /* Models.swift in Sources */,
+				372DD736A2FE83DB891ABDD4 /* OpenDeckApp.swift in Sources */,
+				7E4FE8F12C0D943C2D3BE219 /* Permissions.swift in Sources */,
+				E8132CD9100CE2E71999CF97 /* QRCodeView.swift in Sources */,
 				4E621329784FB3890E8D22D7 /* ServerManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

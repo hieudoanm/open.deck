@@ -10,7 +10,10 @@ struct ContentView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     statusSection
+                    permissionsSection
                     pairingSection
+                    devicesSection
+                    actionsSection
                     settingsSection
                     logSection
                 }
@@ -84,6 +87,97 @@ struct ContentView: View {
             }
             .font(.callout)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    // MARK: - Permissions
+
+    private var permissionsSection: some View {
+        GroupBox("Permissions") {
+            VStack(alignment: .leading, spacing: 8) {
+                permissionRow(
+                    granted: manager.screenRecordingGranted,
+                    title: "Screen Recording",
+                    hint: "Required to capture your display."
+                )
+                permissionRow(
+                    granted: manager.accessibilityGranted,
+                    title: "Accessibility",
+                    hint: "Required to inject mouse and keyboard input."
+                )
+            }
+            .font(.callout)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .onAppear { manager.refreshPermissions() }
+        }
+    }
+
+    private func permissionRow(granted: Bool, title: String, hint: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: granted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .foregroundStyle(granted ? .green : .orange)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).fontWeight(.medium)
+                Text(hint).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            if !granted {
+                Button("Open Settings") {
+                    PermissionHelper.openSystemSettings()
+                }
+                .controlSize(.small)
+            }
+        }
+    }
+
+    // MARK: - Devices
+
+    private var devicesSection: some View {
+        GroupBox("Devices") {
+            if manager.devices.isEmpty {
+                Text(manager.isRunning ? "No devices connected." : "Start the server to see devices.")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                VStack(spacing: 6) {
+                    ForEach(manager.devices) { device in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(device.name).fontWeight(.medium)
+                                Text(device.addr)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Button("Disconnect") { manager.disconnectDevice(id: device.id) }
+                                .controlSize(.small)
+                        }
+                    }
+                }
+                .font(.callout)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    // MARK: - Actions
+
+    private var actionsSection: some View {
+        GroupBox("Actions") {
+            if manager.actions.isEmpty {
+                Text(manager.isRunning ? "No actions available." : "Start the server to see actions.")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 140))], spacing: 8) {
+                    ForEach(manager.actions) { action in
+                        Button(action.name) { manager.runAction(name: action.name) }
+                            .controlSize(.small)
+                            .help(action.detail ?? action.kind)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
     }
 

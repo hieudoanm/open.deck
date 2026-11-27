@@ -92,20 +92,39 @@ fn is_executable(path: &std::path::Path) -> bool {
             .unwrap_or(false)
 }
 
-/// Minimal HTTP GET against the server's `/status` endpoint.
-/// Returns the response body, or None if the server isn't reachable.
-fn fetch_status(port: u16) -> Option<String> {
+/// Minimal HTTP GET against a server path. Returns the body, or None.
+fn fetch_path(port: u16, path: &str) -> Option<String> {
     let addr = format!("127.0.0.1:{port}");
     let mut stream =
         TcpStream::connect_timeout(&addr.parse().ok()?, Duration::from_millis(800)).ok()?;
     stream
         .write_all(
-            format!("GET /status HTTP/1.1\r\nHost: {addr}\r\nConnection: close\r\n\r\n").as_bytes(),
+            format!("GET {path} HTTP/1.1\r\nHost: {addr}\r\nConnection: close\r\n\r\n").as_bytes(),
         )
         .ok()?;
     let mut buf = String::new();
     stream.read_to_string(&mut buf).ok()?;
     buf.split("\r\n\r\n").nth(1).map(str::to_string)
+}
+
+fn fetch_status(port: u16) -> Option<String> {
+    fetch_path(port, "/status")
+}
+
+/// Minimal HTTP POST (empty or small JSON body) against a server path.
+fn http_post(port: u16, path_and_query: &str, body: Option<&str>) -> bool {
+    let addr = format!("127.0.0.1:{port}");
+    let Ok(mut stream) =
+        TcpStream::connect_timeout(&addr.parse().ok()?, Duration::from_millis(800))
+    else {
+        return false;
+    };
+    let payload = body.unwrap_or("");
+    let req = format!(
+        "POST {path_and_query} HTTP/1.1\r\nHost: {addr}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{payload}",
+        payload.len()
+    );
+    stream.write_all(req.as_bytes()).is_ok()
 }
 
 /// Best-effort LAN IPv4 via the UDP-connect trick (no packets are sent).
@@ -138,6 +157,68 @@ fn json_u64(body: &str, key: &str) -> Option<u64> {
         .take_while(|c| c.is_ascii_digit())
         .collect();
     digits.parse().ok()
+}
+
+fn json_string(body: &str, key: &str) -> Option<String> {
+    let pat = format!("\"{key}\":\"");
+    let start = body.find(&pat)? + pat.len();
+    let end = body[start..].find('"')? + start;
+    Some(body[start..end].to_string())
+}
+
+/// Split a top-level JSON array of objects into raw object bodies.
+fn json_objects(body: &str) -> Vec<&str> {
+    let mut out = Vec::new();
+    let mut depth = 0i32;
+    let mut start = None;
+    for (i, c) in body.char_indices() {
+        match c {
+            '{' => {
+                if depth == 0 {
+                    start = Some(i);
+                }
+                depth += 1;
+            }
+            '}' => {
+                depth -= 1;
+                if depth == 0 {
+                    if let Some(s) = start {
+                        out.push(&body[s..=i]);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    out
+}
+
+/// Parse `GET /devices` → [(id, name, addr)].
+fn json_devices(body: &str) -> Vec<(u64, String, String)> {
+    json_objects(body)
+        .into_iter()
+        .filter_map(|obj| {
+            Some((
+                json_u64(obj, "id")?,
+                json_string(obj, "name").unwrap_or_else(|| "device".into()),
+                json_string(obj, "addr").unwrap_or_default(),
+            ))
+        })
+        .collect()
+}
+
+/// Parse `GET /actions` → [(name, detail)].
+fn json_actions(body: &str) -> Vec<(String, String)> {
+    json_objects(body)
+        .into_iter()
+        .filter_map(|obj| {
+            let name = json_string(obj, "name")?;
+            let detail = json_string(obj, "detail")
+                .or_else(|| json_string(obj, "kind"))
+                .unwrap_or_default();
+            Some((name, detail))
+        })
+        .collect()
 }
 
 // ---------------------------------------------------------------------------
@@ -254,6 +335,27 @@ fn build_ui(app: &adw::Application) -> adw::Window {
     settings_group.add(&width_row);
     settings_group.add(&custom_token_row);
 
+    // Token shared with click handlers (copy button, action buttons).
+    let token_store = std::rc::Rc::new(std::cell::RefCell::new(String::new()));
+
+    // ---- Devices group (rebuilt by the status poller) ----
+    let devices_group = adw::PreferencesGroup::new();
+    devices_group.set_title("Devices");
+    let devices_empty = action_row("No devices connected.", "");
+    devices_group.add(&devices_empty);
+    devices_empty.set_visible(true);
+    let devices_rows: std::rc::Rc<std::cell::RefCell<Vec<adw::ActionRow>>> =
+        std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+
+    // ---- Actions group (rebuilt by the status poller) ----
+    let actions_group = adw::PreferencesGroup::new();
+    actions_group.set_title("Actions");
+    let actions_empty = action_row("No actions available.", "");
+    actions_group.add(&actions_empty);
+    actions_empty.set_visible(true);
+    let action_buttons: std::rc::Rc<std::cell::RefCell<Vec<gtk4::Button>>> =
+        std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+
     // ---- Log ----
     let log_view = gtk4::TextView::new();
     log_view.set_editable(false);
@@ -280,6 +382,8 @@ fn build_ui(app: &adw::Application) -> adw::Window {
     content.set_margin_end(16);
     content.append(&status_group);
     content.append(&pairing_group);
+    content.append(&devices_group);
+    content.append(&actions_group);
     content.append(&settings_group);
     content.append(&log_frame);
 
@@ -287,9 +391,6 @@ fn build_ui(app: &adw::Application) -> adw::Window {
     // Worker threads send UiMsg over an std mpsc channel; a short glib
     // timeout drains it on the main thread and applies widget updates.
     let (ui_tx, ui_rx) = std::sync::mpsc::channel::<UiMsg>();
-
-    // Keep the token on the main thread for the copy button.
-    let token_store = std::rc::Rc::new(std::cell::RefCell::new(String::new()));
 
     {
         let state_row_msg = state_row.clone();
@@ -347,11 +448,20 @@ fn build_ui(app: &adw::Application) -> adw::Window {
         });
     }
 
-    // ---- Status polling (every 2s, main thread, non-blocking-ish) ----
+    // ---- Status / devices / actions polling (every 2s, main thread) ----
     {
         let port_spin_poll = port_spin.clone();
         let clients_row_poll = clients_row.clone();
         let monitor_row_poll = monitor_row.clone();
+        let devices_group_poll = devices_group.clone();
+        let devices_empty_poll = devices_empty.clone();
+        let devices_rows_poll = devices_rows.clone();
+        let actions_group_poll = actions_group.clone();
+        let actions_empty_poll = actions_empty.clone();
+        let action_buttons_poll = action_buttons.clone();
+        let token_store_poll = token_store.clone();
+        let last_devices = std::rc::Rc::new(std::cell::RefCell::new(String::new()));
+        let last_actions = std::rc::Rc::new(std::cell::RefCell::new(String::new()));
         glib::timeout_add_local(Duration::from_secs(2), move || {
             let port = port_spin_poll.value() as u16;
             if let Some(body) = fetch_status(port) {
@@ -369,6 +479,68 @@ fn build_ui(app: &adw::Application) -> adw::Window {
                     glib::idle_add_local_once(move || {
                         row.set_subtitle(&format!("{w}x{h}"));
                     });
+                }
+
+                // Devices list.
+                if let Some(dev_body) = fetch_path(port, "/devices") {
+                    if *last_devices.borrow() != dev_body {
+                        *last_devices.borrow_mut() = dev_body.clone();
+                        for row in devices_rows_poll.borrow_mut().drain(..) {
+                            row.unparent();
+                        }
+                        let devs = json_devices(&dev_body);
+                        devices_empty_poll.set_visible(devs.is_empty());
+                        for (id, name, addr) in devs {
+                            let row = adw::ActionRow::new();
+                            row.set_title(&name);
+                            row.set_subtitle(&addr);
+                            let btn = gtk4::Button::with_label("Disconnect");
+                            btn.add_css_class("flat");
+                            btn.set_valign(gtk4::Align::Center);
+                            btn.connect_clicked(move |_| {
+                                let p = port;
+                                std::thread::spawn(move || {
+                                    http_post(p, &format!("/devices/{id}/disconnect"), None);
+                                });
+                            });
+                            row.add_suffix(&btn);
+                            devices_group_poll.add(&row);
+                            devices_rows_poll.borrow_mut().push(row);
+                        }
+                    }
+                }
+
+                // Actions buttons.
+                if let Some(act_body) = fetch_path(port, "/actions") {
+                    if *last_actions.borrow() != act_body {
+                        *last_actions.borrow_mut() = act_body.clone();
+                        for btn in action_buttons_poll.borrow_mut().drain(..) {
+                            btn.unparent();
+                        }
+                        let acts = json_actions(&act_body);
+                        actions_empty_poll.set_visible(acts.is_empty());
+                        for (name, detail) in acts {
+                            let btn = gtk4::Button::with_label(&name);
+                            btn.set_tooltip_text(Some(&detail));
+                            btn.set_valign(gtk4::Align::Center);
+                            let tok = token_store_poll.borrow().clone();
+                            let name_click = name.clone();
+                            btn.connect_clicked(move |_| {
+                                let token = tok.clone();
+                                let pname = name_click.clone();
+                                std::thread::spawn(move || {
+                                    let body = format!("{{\"name\":\"{pname}\"}}");
+                                    http_post(
+                                        port,
+                                        &format!("/actions/run?token={token}"),
+                                        Some(&body),
+                                    );
+                                });
+                            });
+                            actions_group_poll.add(&btn);
+                            action_buttons_poll.borrow_mut().push(btn);
+                        }
+                    }
                 }
             }
             glib::ControlFlow::Continue

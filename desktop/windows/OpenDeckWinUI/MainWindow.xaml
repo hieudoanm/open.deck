@@ -5,46 +5,184 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
-    <Grid Padding="24" RowSpacing="16">
+    <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="OpenDeck" FontSize="28" FontWeight="SemiBold"/>
+        <!-- Header -->
+        <Grid Grid.Row="0" Padding="20,14">
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <TextBlock Text="🎮" FontSize="24" VerticalAlignment="Center"/>
+                <StackPanel>
+                    <TextBlock Text="OpenDeck" FontSize="20" FontWeight="SemiBold"/>
+                    <TextBlock Text="Steam Deck companion" FontSize="12" Opacity="0.6"/>
+                </StackPanel>
+            </StackPanel>
+            <Border HorizontalAlignment="Right" Padding="10,5" CornerRadius="12"
+                    Background="#22FFFFFF">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Ellipse x:Name="StateDot" Width="8" Height="8" Fill="#888"/>
+                    <TextBlock x:Name="StateBadge" Text="Stopped" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
-            <TextBlock Text="Status:" VerticalAlignment="Center"/>
-            <TextBlock x:Name="StatusText" Text="Stopped" VerticalAlignment="Center"/>
-        </StackPanel>
+        <ScrollViewer Grid.Row="1" Padding="20,0,20,12">
+            <StackPanel Spacing="16">
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12">
-            <TextBlock Text="Port:" VerticalAlignment="Center"/>
-            <NumberBox x:Name="PortBox" Value="47821" Minimum="1" Maximum="65535"
-                       Width="100"/>
-        </StackPanel>
+                <!-- Status -->
+                <Expander Header="Status" IsExpanded="True">
+                    <StackPanel Spacing="6" Margin="0,8,0,0">
+                        <Grid>
+                            <TextBlock Text="Server binary" Opacity="0.6"/>
+                            <TextBlock x:Name="BinaryText" HorizontalAlignment="Right"
+                                       TextTrimming="CharacterEllipsis" MaxWidth="360"/>
+                        </Grid>
+                        <Grid>
+                            <TextBlock Text="Monitor" Opacity="0.6"/>
+                            <TextBlock x:Name="MonitorText" Text="—" HorizontalAlignment="Right"/>
+                        </Grid>
+                        <Grid>
+                            <TextBlock Text="Connected devices" Opacity="0.6"/>
+                            <TextBlock x:Name="ClientsText" Text="0" HorizontalAlignment="Right"/>
+                        </Grid>
+                    </StackPanel>
+                </Expander>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="12">
-            <TextBlock Text="Pairing token:" VerticalAlignment="Center"/>
-            <TextBox x:Name="TokenBox" IsReadOnly="True" Width="160"
-                     FontFamily="Cascadia Mono, Consolas"/>
-            <Button x:Name="CopyButton" Content="Copy" Click="CopyButton_Click"/>
-        </StackPanel>
+                <!-- Devices -->
+                <Expander Header="Devices" IsExpanded="True">
+                    <StackPanel Spacing="6" Margin="0,8,0,0">
+                        <ListView x:Name="DevicesList" MinHeight="60" MaxHeight="180">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Addr}"
+                                                   VerticalAlignment="Center" Opacity="0.6"
+                                                   FontSize="11"/>
+                                        <Button Grid.Column="2" Content="Disconnect"
+                                                FontSize="11" Padding="8,2"
+                                                Tag="{Binding Id}"
+                                                Click="DisconnectButton_Click"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        <TextBlock x:Name="NoDevicesText" Text="No devices connected."
+                                   Opacity="0.5" FontSize="12"/>
+                    </StackPanel>
+                </Expander>
 
-        <Border Grid.Row="4" Width="220" Height="220" HorizontalAlignment="Left">
-            <Image x:Name="QrImage" Stretch="Uniform"/>
-        </Border>
+                <!-- Pairing -->
+                <Expander Header="Pairing" IsExpanded="True">
+                    <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,8,0,0">
+                        <Border Width="180" Height="180" Background="White" CornerRadius="8">
+                            <Image x:Name="QrImage" Stretch="Uniform" Margin="8"/>
+                        </Border>
+                        <StackPanel Spacing="8" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="Token:" VerticalAlignment="Center"/>
+                                <TextBox x:Name="TokenBox" IsReadOnly="True" Width="140"
+                                         FontFamily="Cascadia Mono, Consolas"/>
+                                <Button x:Name="CopyButton" Content="Copy" Click="CopyButton_Click"/>
+                            </StackPanel>
+                            <TextBlock Text="Scan the QR code or enter the LAN IP, port and token on your phone."
+                                       TextWrapping="Wrap" Opacity="0.6" FontSize="12" MaxWidth="280"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
 
-        <TextBlock Grid.Row="5" TextWrapping="Wrap"
-                   Text="On your phone, enter this PC's LAN IP, the port, and the pairing token. Make sure Windows Firewall allows inbound TCP on the port."/>
+                <!-- Actions -->
+                <Expander Header="Actions">
+                    <ItemsControl x:Name="ActionsList" Margin="0,8,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Name}" FontSize="12" Padding="10,4"
+                                        Tag="{Binding Name}" Click="ActionButton_Click"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock x:Name="NoActionsText" Text="No actions available."
+                               Opacity="0.5" FontSize="12" Margin="0,8,0,0"/>
+                </Expander>
 
-        <Button Grid.Row="7" x:Name="ToggleButton" Content="Start server"
-                Click="ToggleButton_Click" MinWidth="140"/>
+                <!-- Settings -->
+                <Expander Header="Server settings">
+                    <StackPanel Spacing="10" Margin="0,8,0,0" Width="320">
+                        <Grid>
+                            <TextBlock Text="Port" VerticalAlignment="Center"/>
+                            <NumberBox x:Name="PortBox" Value="47821" Minimum="1" Maximum="65535"
+                                       HorizontalAlignment="Right" Width="100"/>
+                        </Grid>
+                        <Grid>
+                            <TextBlock Text="Frame rate (fps)" VerticalAlignment="Center"/>
+                            <NumberBox x:Name="FpsBox" Value="15" Minimum="1" Maximum="60"
+                                       HorizontalAlignment="Right" Width="100"/>
+                        </Grid>
+                        <Grid>
+                            <TextBlock Text="JPEG quality" VerticalAlignment="Center"/>
+                            <Slider x:Name="QualitySlider" Minimum="1" Maximum="100" Value="70"
+                                    Width="160" HorizontalAlignment="Right"/>
+                            <TextBlock x:Name="QualityText" Text="70" Width="30"
+                                       HorizontalAlignment="Right" Margin="170,0,0,0"/>
+                        </Grid>
+                        <Grid>
+                            <TextBlock Text="Max stream width" VerticalAlignment="Center"/>
+                            <NumberBox x:Name="WidthBox" Value="1280" Minimum="320" Maximum="7680"
+                                       HorizontalAlignment="Right" Width="100"/>
+                        </Grid>
+                        <Grid>
+                            <TextBlock Text="Pairing token (optional)" VerticalAlignment="Center"/>
+                            <TextBox x:Name="CustomTokenBox" PlaceholderText="auto-generate"
+                                     HorizontalAlignment="Right" Width="180"/>
+                        </Grid>
+                        <TextBlock Text="Settings apply on next server start."
+                                   FontSize="11" Opacity="0.5"/>
+                    </StackPanel>
+                </Expander>
+
+                <!-- Log -->
+                <Expander Header="Log" IsExpanded="False">
+                    <Border Background="#11000000" CornerRadius="6" Margin="0,8,0,0" Height="160">
+                        <ListView x:Name="LogList" IsHitTestVisible="False">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontFamily="Cascadia Mono, Consolas"
+                                               FontSize="11" TextWrapping="NoWrap"/>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </Border>
+                </Expander>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Controls -->
+        <Grid Grid.Row="2" Padding="20,12" Background="#11FFFFFF">
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Ellipse x:Name="FooterDot" Width="8" Height="8" Fill="#888"/>
+                <TextBlock x:Name="StatusText" Text="Stopped" VerticalAlignment="Center"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                <Button x:Name="RescanButton" Content="Rescan" Click="RescanButton_Click"/>
+                <Button x:Name="TrayButton" Content="Hide to tray" Click="TrayButton_Click"/>
+                <Button x:Name="ToggleButton" Content="Start server"
+                        Click="ToggleButton_Click" MinWidth="130"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

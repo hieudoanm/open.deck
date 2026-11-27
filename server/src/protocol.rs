@@ -84,6 +84,10 @@ pub enum ClientMessage {
     Text {
         text: String,
     },
+    /// Trigger a named server-side action (see `GET /actions`).
+    RunAction {
+        name: String,
+    },
     Ping,
 }
 

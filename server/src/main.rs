@@ -1,34 +1,38 @@
 //! open-deck-server: streams the primary monitor to OpenDeck mobile clients
 //! and injects their input back into the OS.
 
+mod actions;
 mod capture;
 mod input;
 mod protocol;
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
-use std::time::Duration;
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result};
 use axum::{
     extract::{
         ws::{Message, WebSocket, WebSocketUpgrade},
-        Query, State,
+        ConnectInfo, Path as AxumPath, Query, State,
     },
     http::StatusCode,
     response::{IntoResponse, Response},
-    routing::get,
-    Router,
+    routing::{get, post},
+    Json, Router,
 };
 use clap::Parser;
 use futures_util::{SinkExt, StreamExt};
 use rand::distr::{Alphanumeric, SampleString};
-use tokio::sync::{broadcast, mpsc};
+use serde::Deserialize;
+use tokio::sync::{broadcast, mpsc, oneshot};
 use tower_http::cors::CorsLayer;
 use tracing::{info, warn};
 
+use actions::ActionEngine;
 use capture::{spawn_capture, CaptureConfig, MonitorInfo};
 use protocol::{ClientMessage, Frame, ServerMessage};
 
@@ -59,6 +63,39 @@ struct Args {
     /// Bind address.
     #[arg(long, default_value = "0.0.0.0")]
     bind: String,
+
+    /// Path to a JSON actions file. Defaults to
+    /// $XDG_CONFIG_HOME/opendeck/actions.json (or ~/.config/opendeck/actions.json).
+    #[arg(long)]
+    actions: Option<PathBuf>,
+}
+
+/// A connected client device, surfaced via GET /devices.
+struct Device {
+    id: u64,
+    name: String,
+    addr: SocketAddr,
+    connected_at: u64,
+    kick: oneshot::Sender<()>,
+}
+
+impl Device {
+    fn info(&self) -> DeviceInfo {
+        DeviceInfo {
+            id: self.id,
+            name: self.name.clone(),
+            addr: self.addr.to_string(),
+            connected_at: self.connected_at,
+        }
+    }
+}
+
+#[derive(serde::Serialize)]
+struct DeviceInfo {
+    id: u64,
+    name: String,
+    addr: String,
+    connected_at: u64,
 }
 
 struct AppState {
@@ -68,6 +105,9 @@ struct AppState {
     fps: u32,
     input_tx: mpsc::UnboundedSender<ClientMessage>,
     clients: Arc<AtomicUsize>,
+    devices: Arc<Mutex<HashMap<u64, Device>>>,
+    next_id: AtomicU64,
+    actions: Arc<ActionEngine>,
 }
 
 #[derive(serde::Serialize)]
@@ -76,6 +116,11 @@ struct Status {
     desktop_width: u32,
     desktop_height: u32,
     fps: u32,
+}
+
+#[derive(Deserialize)]
+struct RunActionRequest {
+    name: String,
 }
 
 #[tokio::main]
@@ -101,6 +146,8 @@ async fn main() -> Result<()> {
     })?;
 
     let input_tx = input::spawn_input_thread();
+    let actions = Arc::new(ActionEngine::load(args.actions.as_deref())?);
+    info!(count = actions.list().len(), "actions loaded");
 
     let state = Arc::new(AppState {
         token: token.clone(),
@@ -109,11 +156,18 @@ async fn main() -> Result<()> {
         fps: args.fps,
         input_tx,
         clients: Arc::new(AtomicUsize::new(0)),
+        devices: Arc::new(Mutex::new(HashMap::new())),
+        next_id: AtomicU64::new(1),
+        actions,
     });
 
     let app = Router::new()
         .route("/health", get(|| async { "ok" }))
         .route("/status", get(status_handler))
+        .route("/devices", get(devices_handler))
+        .route("/devices/{id}/disconnect", post(disconnect_handler))
+        .route("/actions", get(actions_list_handler))
+        .route("/actions/run", post(actions_run_handler))
         .route("/ws", get(ws_handler))
         .layer(CorsLayer::permissive())
         .with_state(state);
@@ -133,26 +187,18 @@ async fn main() -> Result<()> {
         "  Monitor       : {}x{} @ {}fps",
         monitor.width, monitor.height, args.fps
     );
+    println!("  Actions       : GET /actions, POST /actions/run");
     println!("===============================");
     println!();
     info!(%addr, "listening");
 
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    axum::serve(listener, app).await?;
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .await?;
     Ok(())
-}
-
-async fn ws_handler(
-    ws: WebSocketUpgrade,
-    Query(params): Query<HashMap<String, String>>,
-    State(state): State<Arc<AppState>>,
-) -> Response {
-    let provided = params.get("token").cloned().unwrap_or_default();
-    if provided != state.token {
-        warn!("rejected WS client: bad token");
-        return (StatusCode::UNAUTHORIZED, "invalid pairing token").into_response();
-    }
-    ws.on_upgrade(move |socket| handle_socket(socket, state))
 }
 
 async fn status_handler(State(state): State<Arc<AppState>>) -> axum::Json<Status> {
@@ -164,14 +210,100 @@ async fn status_handler(State(state): State<Arc<AppState>>) -> axum::Json<Status
     })
 }
 
+async fn devices_handler(State(state): State<Arc<AppState>>) -> Json<Vec<DeviceInfo>> {
+    let devices = state.devices.lock().unwrap();
+    Json(devices.values().map(Device::info).collect::<Vec<_>>())
+}
+
+async fn disconnect_handler(
+    AxumPath(id): AxumPath<u64>,
+    State(state): State<Arc<AppState>>,
+) -> Response {
+    let kick = {
+        let mut devices = state.devices.lock().unwrap();
+        devices.remove(&id).map(|d| d.kick)
+    };
+    match kick {
+        Some(tx) => {
+            let _ = tx.send(());
+            (StatusCode::OK, "disconnected").into_response()
+        }
+        None => (StatusCode::NOT_FOUND, "unknown device").into_response(),
+    }
+}
+
+async fn actions_list_handler(
+    State(state): State<Arc<AppState>>,
+) -> Json<Vec<actions::ActionInfo>> {
+    Json(state.actions.list())
+}
+
+async fn actions_run_handler(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<HashMap<String, String>>,
+    Json(req): Json<RunActionRequest>,
+) -> Response {
+    // Actions can run arbitrary commands — require the pairing token.
+    let provided = params.get("token").cloned().unwrap_or_default();
+    if provided != state.token {
+        return (StatusCode::UNAUTHORIZED, "invalid pairing token").into_response();
+    }
+    match state.actions.run(&req.name, &state.input_tx) {
+        Ok(()) => (StatusCode::OK, format!("ran '{}'", req.name)).into_response(),
+        Err(e) => (StatusCode::BAD_REQUEST, format!("{e:#}")).into_response(),
+    }
+}
+
+async fn ws_handler(
+    ws: WebSocketUpgrade,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    Query(params): Query<HashMap<String, String>>,
+    State(state): State<Arc<AppState>>,
+) -> Response {
+    let provided = params.get("token").cloned().unwrap_or_default();
+    if provided != state.token {
+        warn!("rejected WS client: bad token");
+        return (StatusCode::UNAUTHORIZED, "invalid pairing token").into_response();
+    }
+    ws.on_upgrade(move |socket| handle_socket(socket, state, addr))
+}
+
 /// Messages the sender half can push to the client.
 enum Outbound {
     Json(String),
 }
 
-async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
+fn now_unix() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+}
+
+async fn handle_socket(socket: WebSocket, state: Arc<AppState>, addr: SocketAddr) {
     state.clients.fetch_add(1, Ordering::Relaxed);
     let _guard = ClientGuard(state.clients.clone());
+
+    let id = state.next_id.fetch_add(1, Ordering::Relaxed);
+    let (kick_tx, mut kick_rx) = oneshot::channel::<()>();
+    {
+        let mut devices = state.devices.lock().unwrap();
+        devices.insert(
+            id,
+            Device {
+                id,
+                name: String::new(),
+                addr,
+                connected_at: now_unix(),
+                kick: kick_tx,
+            },
+        );
+    }
+    let _device_guard = DeviceGuard {
+        devices: state.devices.clone(),
+        id,
+    };
+
     let (mut sink, mut stream) = socket.split();
     let mut frames_rx = state.frames.subscribe();
     let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Outbound>();
@@ -233,27 +365,53 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
         }
     });
 
-    // Receiver loop: client text frames → input thread / JSON replies.
-    while let Some(Ok(msg)) = stream.next().await {
-        match msg {
-            Message::Text(text) => match serde_json::from_str::<ClientMessage>(&text) {
-                Ok(ClientMessage::Ping) => {
-                    if let Ok(pong) = serde_json::to_string(&ServerMessage::Pong) {
-                        let _ = out_tx.send(Outbound::Json(pong));
+    // Receiver loop: client text frames → registry / input thread / replies.
+    loop {
+        tokio::select! {
+            biased;
+            _ = &mut kick_rx => {
+                info!(id, "device disconnected by admin");
+                break;
+            }
+            msg = stream.next() => {
+                match msg {
+                    Some(Ok(Message::Text(text))) => {
+                        match serde_json::from_str::<ClientMessage>(&text) {
+                            Ok(ClientMessage::Ping) => {
+                                if let Ok(pong) = serde_json::to_string(&ServerMessage::Pong) {
+                                    let _ = out_tx.send(Outbound::Json(pong));
+                                }
+                            }
+                            Ok(ClientMessage::RunAction { name }) => {
+                                if let Err(e) = state.actions.run(&name, &state.input_tx) {
+                                    warn!("action '{name}' failed: {e:#}");
+                                }
+                            }
+                            Ok(m) => {
+                                if let ClientMessage::Hello { name: Some(n), .. } = &m {
+                                    let mut devices = state.devices.lock().unwrap();
+                                    if let Some(d) = devices.get_mut(&id) {
+                                        d.name = n.clone();
+                                    }
+                                }
+                                if state.input_tx.send(m).is_err() {
+                                    warn!("input thread gone");
+                                    break;
+                                }
+                            }
+                            Err(e) => {
+                                warn!("bad client message: {e}");
+                            }
+                        }
                     }
-                }
-                Ok(m) => {
-                    if state.input_tx.send(m).is_err() {
-                        warn!("input thread gone");
+                    Some(Ok(Message::Close(_))) | None => break,
+                    Some(Ok(_)) => {}
+                    Some(Err(e)) => {
+                        warn!("ws error: {e}");
                         break;
                     }
                 }
-                Err(e) => {
-                    warn!("bad client message: {e}");
-                }
-            },
-            Message::Close(_) => break,
-            _ => {}
+            }
         }
     }
 
@@ -266,5 +424,16 @@ struct ClientGuard(Arc<AtomicUsize>);
 impl Drop for ClientGuard {
     fn drop(&mut self) {
         self.0.fetch_sub(1, Ordering::Relaxed);
+    }
+}
+
+struct DeviceGuard {
+    devices: Arc<Mutex<HashMap<u64, Device>>>,
+    id: u64,
+}
+
+impl Drop for DeviceGuard {
+    fn drop(&mut self) {
+        self.devices.lock().unwrap().remove(&self.id);
     }
 }

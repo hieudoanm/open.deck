@@ -52,6 +52,20 @@ Each binary WebSocket frame is one complete JPEG image of the primary
 display, downscaled to fit `max_width`/`max_height` (default 1280). One encoded
 frame is shared by all connected clients via broadcast.
 
+## HTTP endpoints
+
+In addition to the WebSocket, the server exposes small JSON endpoints used by
+the desktop companions:
+
+| Endpoint                        | Description                                                  |
+| ------------------------------- | ------------------------------------------------------------ |
+| `GET /health`                   | Liveness probe → `ok`                                        |
+| `GET /status`                   | `{clients, desktop_width, desktop_height, fps}`              |
+| `GET /devices`                  | `[{id, name, addr, connected_at}]` — connected clients       |
+| `POST /devices/{id}/disconnect` | Kick a device                                                |
+| `GET /actions`                  | `[{name, kind, detail}]` — available actions                 |
+| `POST /actions/run?token=<t>`   | Body `{"name":"…"}` — run an action (requires pairing token) |
+
 ## Client → Server
 
 All client messages are JSON text frames. Unknown or malformed messages are
@@ -70,6 +84,8 @@ dropped with a server-side warning.
 {"type":"key","key":"Return","state":"press"}
 
 {"type":"text","text":"hello world"}
+
+{"type":"run_action","name":"media-play-pause"}
 
 {"type":"ping"}
 ```
@@ -91,4 +107,6 @@ dropped with a server-side warning.
 - `scroll` `dx`/`dy` are wheel ticks (positive `dy` scrolls down, positive
   `dx` scrolls right).
 - `text` types a literal string through the OS text-input path.
+- `run_action` triggers a server-side action (media keys, custom commands —
+  see `GET /actions`).
 - The server replies `{"type":"pong"}` to `ping`.

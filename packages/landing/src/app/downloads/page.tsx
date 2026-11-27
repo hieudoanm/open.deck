@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import type { FC, ReactNode } from 'react';
 import type { IconType } from 'react-icons';
 import {
-  PiAppleLogo,
   PiAndroidLogo,
+  PiAppleLogo,
   PiDesktopTower,
   PiDownloadSimple,
+  PiHardDrives,
   PiLinuxLogo,
   PiTerminal,
   PiWindowsLogo,
@@ -14,13 +15,13 @@ import {
 export const metadata: Metadata = {
   title: 'Downloads',
   description:
-    'Download OpenDeck — turn an old phone into a Stream Deck — for Windows, macOS, Linux, Android and iOS.',
+    'Download OpenDeck — turn an old phone into a Stream Deck — server binaries, desktop companions, Android APK and iOS build instructions.',
   alternates: { canonical: '/downloads/' },
 };
 
 const GITHUB = 'https://github.com/hieudoanm/open.deck';
-const RELEASES = `${GITHUB}/releases/latest`;
 const RELEASE_PAGE = `${GITHUB}/releases`;
+const ASSET = `${GITHUB}/releases/latest/download`;
 
 interface Asset {
   label: string;
@@ -38,20 +39,74 @@ const DESKTOP: Cell[] = [
   {
     name: 'macOS',
     icon: PiAppleLogo,
-    desc: 'OpenDeck companion app (QR pairing) and the open-deck-server binary.',
-    assets: [{ label: 'macOS', href: RELEASES }],
+    desc: 'OpenDeckMac companion — starts the server, shows the pairing QR. Needs open-deck-server on PATH, in the app folder, or via OPENSDECK_SERVER.',
+    assets: [
+      { label: 'macOS (.dmg)', href: `${ASSET}/desktop-macos-open-deck.dmg` },
+    ],
+  },
+  {
+    name: 'Windows',
+    icon: PiWindowsLogo,
+    desc: 'OpenDeckWinUI companion — Fluent Design, starts/stops the server, pairing QR. Needs open-deck-server.exe alongside or on PATH.',
+    assets: [
+      {
+        label: 'Windows (.exe)',
+        href: `${ASSET}/desktop-windows-open-deck.exe`,
+      },
+    ],
+  },
+  {
+    name: 'Linux',
+    icon: PiLinuxLogo,
+    desc: 'opendeck-linux companion (GTK4/libadwaita). Requires GTK4 + libadwaita runtime libraries and the server binary.',
+    assets: [{ label: 'Linux', href: `${ASSET}/desktop-linux-open-deck` }],
+  },
+];
+
+const SERVER: Cell[] = [
+  {
+    name: 'macOS (Apple Silicon)',
+    icon: PiAppleLogo,
+    desc: 'open-deck-server for M1 and later Macs.',
+    assets: [
+      {
+        label: 'Apple Silicon',
+        href: `${ASSET}/open-deck-server-aarch64-apple-darwin`,
+      },
+    ],
+  },
+  {
+    name: 'macOS (Intel)',
+    icon: PiAppleLogo,
+    desc: 'open-deck-server for Intel Macs.',
+    assets: [
+      {
+        label: 'Intel',
+        href: `${ASSET}/open-deck-server-x86_64-apple-darwin`,
+      },
+    ],
+  },
+  {
+    name: 'Linux',
+    icon: PiLinuxLogo,
+    desc: 'open-deck-server for x86_64 GNU/Linux. Needs PipeWire/portal screen-capture support.',
+    assets: [
+      {
+        label: 'x86_64',
+        href: `${ASSET}/open-deck-server-x86_64-unknown-linux-gnu`,
+      },
+    ],
   },
   {
     name: 'Windows',
     icon: PiWindowsLogo,
     desc: 'open-deck-server for Windows 10/11, x86_64.',
-    assets: [{ label: 'Windows', href: RELEASES }],
-  },
-  {
-    name: 'Linux',
-    icon: PiLinuxLogo,
-    desc: 'opendeck-linux companion app (GTK4/libadwaita) and server binary.',
-    assets: [{ label: 'Linux', href: RELEASES }],
+    assets: [
+      {
+        label: '.exe',
+        href: `${ASSET}/open-deck-server-x86_64-pc-windows-msvc.exe`,
+      },
+    ],
   },
 ];
 
@@ -59,14 +114,19 @@ const MOBILE: Cell[] = [
   {
     name: 'Android',
     icon: PiAndroidLogo,
-    desc: 'OpenDeck app — sideload the APK or build from source with Gradle.',
-    assets: [{ label: 'Android APK', href: RELEASES }],
+    desc: 'OpenDeck APK — sideload it, or build from source with Gradle. NFC tools + session focus mode included.',
+    assets: [
+      {
+        label: 'Android APK',
+        href: `${ASSET}/mobile-android-open-deck.apk`,
+      },
+    ],
   },
   {
     name: 'iOS',
     icon: PiAppleLogo,
-    desc: 'OpenDeck app for iPhone and iPad — build with Xcode or TestFlight.',
-    assets: [{ label: 'iOS', href: RELEASES }],
+    desc: 'OpenDeck for iPhone — build with Xcode or wait for TestFlight. Simulator build attached to releases.',
+    assets: [{ label: 'iOS', href: RELEASE_PAGE }],
   },
 ];
 
@@ -105,7 +165,7 @@ function CardGrid({ cells, cols }: { cells: Cell[]; cols: string }) {
           <h3 className="text-base-content m-0 text-lg leading-tight">
             {c.name}
           </h3>
-          <p className="text-base-content/60 mt-1 text-sm">{c.desc}</p>
+          <p className="text-base-content/60 mt-1 truncate text-sm">{c.desc}</p>
           <div className="mt-4 flex flex-col gap-2">
             {c.assets.map((a) => (
               <a
@@ -139,6 +199,10 @@ const SOURCE_STEPS: { label: string; cmd: string }[] = [
     cmd: 'cd open.deck/desktop/linux && cargo build --release',
   },
   {
+    label: 'Windows companion app',
+    cmd: 'cd open.deck/desktop/windows && dotnet build OpenDeckWinUI.sln -c Release',
+  },
+  {
     label: 'Android app',
     cmd: 'cd open.deck/mobile/android && ./gradlew installDebug',
   },
@@ -163,18 +227,22 @@ const Downloads: FC = () => (
           <p className="text-base-content/60 mt-3 text-lg">
             Prebuilt binaries are attached to the{' '}
             <a href={RELEASE_PAGE} className="text-primary">
-              GitHub releases
+              latest GitHub release
             </a>
             .
           </p>
         </div>
 
-        <Section icon={PiDesktopTower} title="Desktop">
+        <Section icon={PiDesktopTower} title="Desktop companions">
           <CardGrid cells={DESKTOP} cols="lg:grid-cols-3" />
         </Section>
 
         <Section icon={PiAndroidLogo} title="Mobile">
           <CardGrid cells={MOBILE} cols="lg:grid-cols-2" />
+        </Section>
+
+        <Section icon={PiHardDrives} title="Server">
+          <CardGrid cells={SERVER} cols="lg:grid-cols-4" />
         </Section>
 
         <div className="border-base-300 bg-base-200/50 rounded-2xl border p-6">

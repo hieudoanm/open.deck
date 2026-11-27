@@ -1,4 +1,6 @@
+import ApplicationServices
 import Combine
+import CoreGraphics
 import Foundation
 
 /// Locates the `open-deck-server` companion binary.
@@ -58,6 +60,8 @@ final class ServerManager: ObservableObject {
     @Published private(set) var monitorInfo: String?
     @Published private(set) var serverPath: String?
     @Published private(set) var logLines: [String] = []
+    @Published private(set) var devices: [DeviceInfo] = []
+    @Published private(set) var actions: [ActionInfo] = []
 
     // MARK: - Settings (persisted)
 
@@ -269,8 +273,52 @@ final class ServerManager: ObservableObject {
             }
         } catch {
             // Server not up yet or shutting down — ignore.
+            return
+        }
+
+        if let url = URL(string: "http://127.0.0.1:\(port)/devices"),
+           let (data, _) = try? await session.data(from: url),
+           let list = try? JSONDecoder().decode([DeviceInfo].self, from: data) {
+            devices = list
+        }
+        if let url = URL(string: "http://127.0.0.1:\(port)/actions"),
+           let (data, _) = try? await session.data(from: url),
+           let list = try? JSONDecoder().decode([ActionInfo].self, from: data) {
+            actions = list
         }
     }
+
+    /// Kick a connected device by its server-side id.
+    func disconnectDevice(id: Int) {
+        guard let token,
+              let url = URL(string: "http://127.0.0.1:\(port)/devices/\(id)/disconnect") else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(token, forHTTPHeaderField: "X-OpenDeck-Token")
+        Task { _ = try? await session.data(for: request) }
+    }
+
+    /// Run a server-side action (media keys, custom commands).
+    func runAction(name: String) {
+        guard let token,
+              var components = URLComponents(string: "http://127.0.0.1:\(port)/actions/run") else { return }
+        components.queryItems = [URLQueryItem(name: "token", value: token)]
+        guard let url = components.url else { return }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: ["name": name])
+        Task { _ = try? await session.data(for: request) }
+    }
+
+    /// Re-check macOS permissions (Screen Recording / Accessibility).
+    func refreshPermissions() {
+        screenRecordingGranted = CGPreflightScreenCaptureAccess()
+        accessibilityGranted = AXIsProcessTrusted()
+    }
+
+    @Published private(set) var screenRecordingGranted = false
+    @Published private(set) var accessibilityGranted = false
 
     private func appendLog(_ line: String) {
         logLines.append(line)

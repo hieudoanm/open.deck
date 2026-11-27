@@ -97,6 +97,8 @@ fn apply(enigo: &mut Enigo, msg: &ClientMessage) -> Result<()> {
         ClientMessage::Text { text } => {
             enigo.text(text)?;
         }
+        // Handled in main.rs before messages reach the input thread.
+        ClientMessage::RunAction { .. } => {}
         ClientMessage::Ping => {}
     }
     Ok(())

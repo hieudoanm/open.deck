@@ -9,7 +9,8 @@ events — all over a single WebSocket on your local network.
 
 - **Getting started** — install the server and apps, pair your phone.
 - **Concepts** — how capture, streaming and input injection fit together.
-- **Guides** — server flags, mobile app usage, desktop companion apps.
+- **Guides** — server flags plus per-platform guides for the desktop companions
+  (macOS, Linux, Windows) and phone apps (Android, iOS).
 
 ## Components
 

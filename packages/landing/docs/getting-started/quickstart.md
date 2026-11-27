@@ -48,4 +48,5 @@ click, drag to drag, use the on-screen keyboard for text and shortcuts.
 - Learn the wire format in [Architecture](../concepts/architecture.md) and the
   [Protocol](../concepts/protocol.md).
 - The bottom bar sends common keys today; a configurable macro/deck grid is on
-  the roadmap — see [Mobile app](../guides/mobile-app.md).
+  the roadmap — see [Mobile app — Android](../guides/mobile-android.md) or
+  [Mobile app — iOS](../guides/mobile-ios.md).
