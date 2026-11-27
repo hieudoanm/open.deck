@@ -20,7 +20,9 @@ pairing token, WebSocket URL, path, and monitor size — desktop companion apps
 parse it, so keep the format stable.
 
 HTTP endpoints: `GET /health`, `GET /status` (JSON client count + desktop/stream
-info), and `GET /ws?token=…` for the WebSocket upgrade.
+info), `GET /ports` + `GET /apps` (host introspection — listening sockets via
+`lsof`/`netstat`, processes via `sysinfo`; both spawn-blocking), and
+`GET /ws?token=…` for the WebSocket upgrade.
 
 ## Structure
 
@@ -28,6 +30,12 @@ info), and `GET /ws?token=…` for the WebSocket upgrade.
   broadcast frame fan-out, client counter.
 - `src/capture.rs` — monitor enumeration + frame capture (`xcap`) and JPEG
   encoding (`image`); emits `protocol::Frame` on a `tokio::broadcast` channel.
+- `src/stats.rs` — host metrics sampler (`sysinfo`, ~2s cadence) broadcast as
+  `ServerMessage::Stats`; each client socket forwards the latest snapshot so
+  mobile System pages can show desktop stats.
+- `src/hostinfo.rs` — `GET /ports` + `GET /apps` collectors: lsof on unix /
+  netstat on Windows for listening sockets (pid + process name), sysinfo for
+  the process list (cpu/mem). Blocking — handlers use `spawn_blocking`.
 - `src/input.rs` — dedicated OS input thread (`enigo`) consuming
   `ClientMessage`s for mouse, scroll, key, and text injection.
 - `src/protocol.rs` — serde wire types shared with every client. Normative spec:

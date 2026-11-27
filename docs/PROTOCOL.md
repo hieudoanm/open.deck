@@ -46,6 +46,37 @@ Field notes:
 - `{"type":"pong"}` answers a client `ping`; `{"type":"error","message":"…"}`
   is reserved for server-side failures.
 
+### `stats` — host metrics (every ~2s)
+
+While a session is connected, the server pushes a `stats` text frame roughly
+every 2 seconds with host (desktop machine) metrics:
+
+```json
+{
+  "type": "stats",
+  "cpu_percent": 12.5,
+  "mem_used": 8589934592,
+  "mem_total": 17179869184,
+  "swap_used": 0,
+  "swap_total": 2147483648,
+  "disk_used": 322122547200,
+  "disk_total": 494384795648,
+  "net_rx_rate": 15234,
+  "net_tx_rate": 4210,
+  "uptime_secs": 3600,
+  "battery_percent": 87.5
+}
+```
+
+Field notes:
+
+- All sizes are **bytes**; `net_rx_rate`/`net_tx_rate` are **bytes per second**
+  measured server-side.
+- `disk_*` describes the root filesystem (or first mounted disk).
+- `battery_percent` is omitted when the host has no battery (desktop machines).
+- Clients use this to render "desktop" stat cards; phone-local stats remain
+  client-side.
+
 ### Binary frames
 
 Each binary WebSocket frame is one complete JPEG image of the primary
@@ -65,6 +96,8 @@ the desktop companions:
 | `POST /devices/{id}/disconnect` | Kick a device                                                |
 | `GET /actions`                  | `[{name, kind, detail}]` — available actions                 |
 | `POST /actions/run?token=<t>`   | Body `{"name":"…"}` — run an action (requires pairing token) |
+| `GET /ports`                    | Listening TCP + bound UDP endpoints with pid/process         |
+| `GET /apps`                     | Running processes `[{pid,name,cpu_percent,mem_bytes}]`       |
 
 ## Client → Server
 

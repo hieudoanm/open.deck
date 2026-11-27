@@ -21,6 +21,22 @@ pub enum ServerMessage {
         max_fps: u32,
     },
     Pong,
+    /// Periodic host stats (~2s cadence), so clients can show desktop metrics.
+    Stats {
+        cpu_percent: f32,
+        mem_used: u64,
+        mem_total: u64,
+        swap_used: u64,
+        swap_total: u64,
+        disk_used: u64,
+        disk_total: u64,
+        /// Bytes/sec, computed server-side from counter deltas.
+        net_rx_rate: u64,
+        net_tx_rate: u64,
+        uptime_secs: u64,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        battery_percent: Option<f32>,
+    },
     Error {
         message: String,
     },

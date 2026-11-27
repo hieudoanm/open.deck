@@ -23,10 +23,14 @@ class DeckViewModel : ViewModel() {
     var connState by mutableStateOf(ConnState.DISCONNECTED)
     var frame by mutableStateOf<ImageBitmap?>(null)
     var hello by mutableStateOf<HelloInfo?>(null)
+    var desktopStats by mutableStateOf<DesktopStats?>(null)
     var focusMode by mutableStateOf(false)
 
+    // Dashboard page state — the phone lies horizontally and pages are
+    // swiped left/right (parity with iOS DeckModel.page).
+    var page by mutableStateOf(DeckPage.DECK)
+
     // NFC tool state
-    var showNfc by mutableStateOf(false)
     var nfcInfo by mutableStateOf<NfcTagInfo?>(null)
     var nfcMessage by mutableStateOf<String?>(null)
     var nfcBusy by mutableStateOf(false)
@@ -46,6 +50,9 @@ class DeckViewModel : ViewModel() {
             onHello = { h ->
                 viewModelScope.launch(Dispatchers.Main) { hello = h }
             },
+            onStats = { s ->
+                viewModelScope.launch(Dispatchers.Main) { desktopStats = s }
+            },
             onState = { state, msg ->
                 viewModelScope.launch(Dispatchers.Main) {
                     connState = state
@@ -54,6 +61,7 @@ class DeckViewModel : ViewModel() {
                     if (state == ConnState.DISCONNECTED) {
                         frame = null
                         hello = null
+                        desktopStats = null
                     }
                 }
             },
@@ -114,7 +122,7 @@ class DeckViewModel : ViewModel() {
                 } else {
                     nfcInfo = info
                     nfcMessage = null
-                    showNfc = true
+                    page = DeckPage.NFC
                 }
             }
         }
@@ -128,16 +136,16 @@ class DeckViewModel : ViewModel() {
         }
         pendingWrite = true
         nfcMessage = "Write armed — tap a tag now"
-        showNfc = true
+        page = DeckPage.NFC
     }
 
     fun openNfc() {
         nfcMessage = nfcMessage ?: "Tap a tag to read it, or arm a write below"
-        showNfc = true
+        page = DeckPage.NFC
     }
 
     fun closeNfc() {
-        showNfc = false
+        page = DeckPage.DECK
         nfcInfo = null
         nfcMessage = null
         pendingWrite = false

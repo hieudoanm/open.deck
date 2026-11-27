@@ -8,12 +8,28 @@ struct HelloInfo {
     var streamHeight: Int
 }
 
+/// Host stats pushed by the server every ~2s (`{"type":"stats",...}`).
+struct DesktopStats {
+    var cpuPercent: Double
+    var memUsed: UInt64
+    var memTotal: UInt64
+    var swapUsed: UInt64
+    var swapTotal: UInt64
+    var diskUsed: UInt64
+    var diskTotal: UInt64
+    var netRxRate: UInt64
+    var netTxRate: UInt64
+    var uptimeSecs: UInt64
+    var batteryPercent: Double?
+}
+
 /// Thin wrapper around URLSessionWebSocketTask speaking the OpenDeck
 /// protocol (see docs/PROTOCOL.md). Runs its receive loop on a dedicated
 /// URLSession delegate queue.
 final class DeckClient {
     var onFrame: ((UIImage) -> Void)?
     var onHello: ((HelloInfo) -> Void)?
+    var onStats: ((DesktopStats) -> Void)?
     var onState: ((Bool, String) -> Void)?
 
     private var task: URLSessionWebSocketTask?
@@ -81,6 +97,21 @@ final class DeckClient {
             )
             DispatchQueue.main.async { self.onHello?(hello) }
             DispatchQueue.main.async { self.onState?(true, "Connected") }
+        case "stats":
+            let stats = DesktopStats(
+                cpuPercent: obj["cpu_percent"] as? Double ?? 0,
+                memUsed: uint64(obj["mem_used"]),
+                memTotal: uint64(obj["mem_total"]),
+                swapUsed: uint64(obj["swap_used"]),
+                swapTotal: uint64(obj["swap_total"]),
+                diskUsed: uint64(obj["disk_used"]),
+                diskTotal: uint64(obj["disk_total"]),
+                netRxRate: uint64(obj["net_rx_rate"]),
+                netTxRate: uint64(obj["net_tx_rate"]),
+                uptimeSecs: uint64(obj["uptime_secs"]),
+                batteryPercent: obj["battery_percent"] as? Double
+            )
+            DispatchQueue.main.async { self.onStats?(stats) }
         case "pong":
             break
         case "error":
@@ -88,6 +119,15 @@ final class DeckClient {
             DispatchQueue.main.async { self.onState?(true, message) }
         default:
             break
+        }
+    }
+
+    private func uint64(_ value: Any?) -> UInt64 {
+        switch value {
+        case let n as Int: return UInt64(max(0, n))
+        case let n as Double: return UInt64(max(0, n))
+        case let n as NSNumber: return n.uint64Value
+        default: return 0
         }
     }
 

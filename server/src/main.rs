@@ -3,8 +3,10 @@
 
 mod actions;
 mod capture;
+mod hostinfo;
 mod input;
 mod protocol;
+mod stats;
 
 use std::collections::HashMap;
 use std::net::SocketAddr;
@@ -108,6 +110,7 @@ struct AppState {
     devices: Arc<Mutex<HashMap<u64, Device>>>,
     next_id: AtomicU64,
     actions: Arc<ActionEngine>,
+    stats: broadcast::Sender<ServerMessage>,
 }
 
 #[derive(serde::Serialize)]
@@ -148,6 +151,7 @@ async fn main() -> Result<()> {
     let input_tx = input::spawn_input_thread();
     let actions = Arc::new(ActionEngine::load(args.actions.as_deref())?);
     info!(count = actions.list().len(), "actions loaded");
+    let stats_tx = stats::spawn_stats();
 
     let state = Arc::new(AppState {
         token: token.clone(),
@@ -159,6 +163,7 @@ async fn main() -> Result<()> {
         devices: Arc::new(Mutex::new(HashMap::new())),
         next_id: AtomicU64::new(1),
         actions,
+        stats: stats_tx,
     });
 
     let app = Router::new()
@@ -168,6 +173,8 @@ async fn main() -> Result<()> {
         .route("/devices/{id}/disconnect", post(disconnect_handler))
         .route("/actions", get(actions_list_handler))
         .route("/actions/run", post(actions_run_handler))
+        .route("/ports", get(ports_handler))
+        .route("/apps", get(apps_handler))
         .route("/ws", get(ws_handler))
         .layer(CorsLayer::permissive())
         .with_state(state);
@@ -254,6 +261,20 @@ async fn actions_run_handler(
     }
 }
 
+async fn ports_handler() -> Json<Vec<hostinfo::PortEntry>> {
+    let ports = tokio::task::spawn_blocking(hostinfo::list_ports)
+        .await
+        .unwrap_or_default();
+    Json(ports)
+}
+
+async fn apps_handler() -> Json<Vec<hostinfo::AppEntry>> {
+    let apps = tokio::task::spawn_blocking(hostinfo::list_apps)
+        .await
+        .unwrap_or_default();
+    Json(apps)
+}
+
 async fn ws_handler(
     ws: WebSocketUpgrade,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
@@ -306,6 +327,7 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>, addr: SocketAddr
 
     let (mut sink, mut stream) = socket.split();
     let mut frames_rx = state.frames.subscribe();
+    let mut stats_rx = state.stats.subscribe();
     let (out_tx, mut out_rx) = mpsc::unbounded_channel::<Outbound>();
 
     // Sender task: hello → frames + any JSON replies (pong, errors).
@@ -359,6 +381,17 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>, addr: SocketAddr
                         }
                         Err(broadcast::error::RecvError::Lagged(_)) => continue,
                         Err(broadcast::error::RecvError::Closed) => break,
+                    }
+                }
+                stats = stats_rx.recv() => {
+                    match stats {
+                        Ok(m) => {
+                            if let Ok(text) = serde_json::to_string(&m) {
+                                if sink.send(Message::Text(text.into())).await.is_err() { break; }
+                            }
+                        }
+                        Err(broadcast::error::RecvError::Lagged(_)) => continue,
+                        Err(broadcast::error::RecvError::Closed) => {}
                     }
                 }
             }

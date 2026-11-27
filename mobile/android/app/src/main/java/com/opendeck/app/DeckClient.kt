@@ -26,11 +26,27 @@ data class HelloInfo(
     val streamHeight: Int,
 )
 
+/** Host stats pushed by the server every ~2s (`{"type":"stats",...}`). */
+data class DesktopStats(
+    val cpuPercent: Double,
+    val memUsed: Long,
+    val memTotal: Long,
+    val swapUsed: Long,
+    val swapTotal: Long,
+    val diskUsed: Long,
+    val diskTotal: Long,
+    val netRxRate: Long,
+    val netTxRate: Long,
+    val uptimeSecs: Long,
+    val batteryPercent: Double?,
+)
+
 class DeckClient(
     private val scope: CoroutineScope,
     private val onFrame: (Bitmap) -> Unit,
     private val onHello: (HelloInfo) -> Unit,
     private val onState: (ConnState, String) -> Unit,
+    private val onStats: (DesktopStats) -> Unit = {},
 ) {
     private val client = OkHttpClient.Builder()
         .pingInterval(15, TimeUnit.SECONDS)
@@ -68,6 +84,21 @@ class DeckClient(
                                 desktopHeight = o.optInt("desktop_height"),
                                 streamWidth = o.optInt("stream_width"),
                                 streamHeight = o.optInt("stream_height"),
+                            )
+                        )
+                        "stats" -> onStats(
+                            DesktopStats(
+                                cpuPercent = o.optDouble("cpu_percent"),
+                                memUsed = o.optLong("mem_used"),
+                                memTotal = o.optLong("mem_total"),
+                                swapUsed = o.optLong("swap_used"),
+                                swapTotal = o.optLong("swap_total"),
+                                diskUsed = o.optLong("disk_used"),
+                                diskTotal = o.optLong("disk_total"),
+                                netRxRate = o.optLong("net_rx_rate"),
+                                netTxRate = o.optLong("net_tx_rate"),
+                                uptimeSecs = o.optLong("uptime_secs"),
+                                batteryPercent = if (o.has("battery_percent") && !o.isNull("battery_percent")) o.optDouble("battery_percent") else null,
                             )
                         )
                         "pong" -> {}

@@ -21,10 +21,16 @@ Requires JDK 17+ and the Android SDK (`compileSdk = 35`, `minSdk = 26`).
 - `app/src/main/java/com/opendeck/app/DeckClient.kt` — WebSocket layer
   (OkHttp `WebSocketListener`). Binary frames → `Bitmap`; text frames parsed
   with `org.json`. Exposes `connect(url)`, `disconnect()`, `send(json)`,
-  `sendMouseMove`, `sendMouseButton`, `sendKey`.
+  `sendMouseMove`, `sendMouseButton`, `sendKey`, and an `onStats` callback
+  for server `{"type":"stats"}` host-metrics frames (~2s cadence).
 - `DeckViewModel.kt` — `ViewModel` owning form state (`host`, `port`,
-  `token`), `ConnState`, latest `ImageBitmap` frame and `HelloInfo`.
-- `MainActivity.kt` — all Compose UI plus input mapping:
+  `token`), `ConnState`, latest `ImageBitmap` frame, `HelloInfo`,
+  `desktopStats`, `page` (`DeckPage`), `focusMode`, and NFC UI state
+  (`nfcInfo`, `nfcBusy`, `writeAsUri`/`writeValue`, `pendingWrite`);
+  publishes `SessionState.deckConnected` for the accessibility service.
+- `MainActivity.kt` — `HorizontalPager` over `DeckPage` (deck/clock/system/
+  ip/ports/apps/clipboard/nfc) with tappable dots — parity with iOS `DeckPagerView`;
+  plus input mapping:
   `mapToDesktop()` converts view coords → stream coords → absolute desktop
   pixels (must match `ContentScale.Fit` letterboxing); `keyNameFor()` maps
   Android `KeyEvent`s to protocol key names; `handleDeepLink()` routes
@@ -33,13 +39,23 @@ Requires JDK 17+ and the Android SDK (`compileSdk = 35`, `minSdk = 26`).
   tag holding the URI also pairs) to `DeckViewModel.applyDeepLink`.
   `NfcDispatcher` is enabled in `onResume`/`onPause`; tag intents go to
   `DeckViewModel.onTagScanned`. `onStop` disconnects an active session.
+- `Clock.kt`, `ClockViewModels.kt`, `ClockScreens.kt` — Clock suite ported
+  from omni macOS (watchface, world clock, timer, stopwatch, pomodoro +
+  Open-Meteo weather); coroutine-based VMs, parity with iOS `Clock/`.
+- `SystemMonitor.kt`, `SystemScreen.kt` — phone-local stats (memory/CPU/
+  battery/disk/network via `/proc`, `ActivityManager`, `BatteryManager`)
+  plus desktop stats cards rendered from `desktopStats` behind a
+  Phone/Desktop toggle (parity with iOS `System/`).
+- `IPScreen.kt`, `IPService.kt` — IP info page (local interfaces + public IP
+  lookup); parity with iOS `IP/`.
+- `HostApi.kt`, `PortsScreen.kt`, `AppsScreen.kt` — host-introspection pages
+  hitting the server's `GET /ports` (5s poll) and `GET /apps` (2s poll);
+  parity with iOS `Host/` and omni's Ports/Apps views.
+- `ClipboardScreen.kt` — clipboard history viewer (`ClipboardManager`);
+  parity with iOS `Clipboard/`.
 - `Nfc.kt` — NFC toolkit (ported from omni, no DI): `NfcTags.inspect/write`
   for NDEF read/write with URI/text/MIME record decoding, and
   `NfcDispatcher` wrapping `enableForegroundDispatch`.
-- `DeckViewModel.kt` — also owns NFC UI state (`showNfc`, `nfcInfo`,
-  `nfcBusy`, `writeAsUri`/`writeValue`, `pendingWrite`) and the
-  `focusMode` toggle; publishes `SessionState.deckConnected` for the
-  accessibility service.
 - `Focus.kt` / `OpenDeckAccessibilityService.kt` — session focus mode:
   while connected and enabled, leaving OpenDeck brings it back via
   `TYPE_WINDOW_STATE_CHANGED` events. `FocusMode` persists the setting;

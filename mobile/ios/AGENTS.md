@@ -17,19 +17,45 @@ xcodebuild -project OpenDeck.xcodeproj -scheme OpenDeck \
 
 - `project.yml` — xcodegen spec: bundle id `com.opendeck.app`, sources =
   `OpenDeck/`, Info.plist properties, Swift 5.10, all orientations.
-- `OpenDeck/OpenDeckApp.swift` — `@main`; swaps `ConnectView`/`StreamView` on
-  `DeckModel.connected`.
+- `OpenDeck/OpenDeckApp.swift` — `@main`; hosts `DeckPagerView`; backgrounding
+  disconnects the session (Android `onStop` parity).
+- `OpenDeck/DeckPagerView.swift` — swipeable dashboard: `TabView(.page)` over
+  `DeckPage` (deck/clock/system/ip/ports/apps/clipboard/nfc), custom tappable `PageDots`.
+  Paging is disabled while the stream page is connected so its mouse drag
+  gesture doesn't fight the pager pan.
 - `OpenDeck/DeckModel.swift` — `@MainActor ObservableObject`: form fields
-  (`host`, `port`, `token`), `status`, `connected`, `frame`, `hello`, NFC
-  state (`showNfc`, `nfcInfo`, `nfcBusy`, `writeAsUri`/`writeValue`) and
-  `nfcService`; `scanNfc`/`writeNfc`/`openNfc`/`closeNfc`; a scanned
+  (`host`, `port`, `token`), `status`, `connected`, `frame`, `hello`,
+  `desktopStats` (server `stats` frames), `page`, NFC state
+  (`nfcInfo`, `nfcBusy`, `writeAsUri`/`writeValue`) and `nfcService`;
+  `scanNfc`/`writeNfc`/`openNfc`/`closeNfc`; a scanned
   `opendeck://connect` URI record fills the form via `handleOpenURL`
   (Android `onTagScanned` parity); thin pass-throughs to `DeckClient`.
 - `OpenDeck/DeckClient.swift` — `URLSessionWebSocketTask` client with a
   recursive `receive` loop; decodes binary frames as `UIImage`, parses
-  `hello`/`pong`/`error`, builds protocol JSON by string interpolation
+  `hello`/`pong`/`stats`/`error`, builds protocol JSON by string interpolation
   (escape `"` and `\` in `sendKey`).
-- `OpenDeck/ConnectView.swift` — host/port/token form plus NFC-tools entry.
+- `OpenDeck/ConnectView.swift` — host/port/token form.
+- `OpenDeck/StreamView.swift` — `GeometryReader` + `DragGesture`; `mapToDesktop`
+  converts view → stream → absolute desktop pixels matching `.scaledToFit`
+  letterboxing; bottom row sends ESC/TAB/↵/⌫/arrow keys.
+- `OpenDeck/Clock/` — Clock suite ported from omni macOS (watchface, world
+  clock, timer, stopwatch, pomodoro + Open-Meteo weather): `ClockModels`,
+  `ClockFormatters`, `ClockViewModels` (`@MainActor ObservableObject`s),
+  `ClockViews`, `WeatherService`, `Chime`.
+- `OpenDeck/System/` — phone-local monitors (`SystemMonitor`: memory via
+  `host_statistics64`, CPU via `host_processor_info`, battery via `UIDevice`,
+  disk via `URLResourceValues`; `ByteFormatter`) plus `SystemView` which also
+  renders `desktopStats` (server `{"type":"stats"}` frames, ~2s cadence) with
+  a Phone/Desktop segmented toggle.
+- `OpenDeck/IP/` — IP info page (local IPs, public IP lookup, network
+  interfaces): `IPModels`, `IPViewModel`, `IPView`.
+- `OpenDeck/Host/` — host-introspection pages fed by server HTTP endpoints:
+  `HostModels.swift` (`PortEntry`/`AppEntry` + `HostAPI` built from the
+  connect form's host/port), `PortsView.swift` (`GET /ports`, 5s poll,
+  search), `AppsView.swift` (`GET /apps`, 2s poll, search) — ports of omni's
+  Ports/Apps views.
+- `OpenDeck/Clipboard/` — `UIPasteboard` history viewer: `ClipboardStore`,
+  `ClipboardView`.
 - `OpenDeck/NFC/` — NFC toolkit, parity with Android's `Nfc.kt`:
   `NdefCodec.swift` (pure NDEF parse/serialize — URI prefix table, text
   status byte, Smart Poster), `NdefPayload`/`NdefRecord`/`TagInfo` models,
@@ -44,9 +70,7 @@ xcodebuild -project OpenDeck.xcodeproj -scheme OpenDeck \
   converts view → stream → absolute desktop pixels matching `.scaledToFit`
   letterboxing; top bar has NFC + Disconnect; bottom row sends
   ESC/TAB/↵/⌫/arrow keys.
-- `OpenDeck/OpenDeckApp.swift` — routes `ConnectView`/`NfcView`/`StreamView`
-  on `model.showNfc`/`model.connected`; `scenePhase == .background`
-  disconnects the session (Android `onStop` parity).
+- `OpenDeck/StreamView.swift` — stream page inside the pager (see above).
 
 ## Conventions
 

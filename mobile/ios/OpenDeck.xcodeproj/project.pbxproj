@@ -8,36 +8,98 @@
 
 /* Begin PBXBuildFile section */
 		0B63998FA84DFE2A7D921B1C /* NdefRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7993B9BCD7144E53989A0670 /* NdefRecord.swift */; };
+		1130192C3766FC6DF5E08D18 /* DeckPagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26129C4710FFA5AAE6AAC14C /* DeckPagerView.swift */; };
+		1792024D774B4063068EF5EC /* ClockViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7187E925DC7886DBAF28C2C8 /* ClockViews.swift */; };
+		1D72DF0453A7ECD8D54EF9AD /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AF3D914794D99A872FA3006 /* ClipboardStore.swift */; };
 		232ADE5535ADD6897F9674A1 /* NdefCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD47397DB618F39DD183D3B3 /* NdefCodec.swift */; };
 		3D2CE5D98FE99C6E6BF66242 /* OpenDeckApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827F6D7A6B79BE150B73D89D /* OpenDeckApp.swift */; };
 		405AAD69C301E4990144E3C6 /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF690220B94E1BEABB52FDE2 /* ConnectView.swift */; };
+		40929FC5E81C74CFA1169A1E /* WeatherService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3882AF2C60FF97FF1832BAC /* WeatherService.swift */; };
 		4186AE318A62ECDEC39B8376 /* NfcService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D88CD2BB3A5DA58FF6B0817 /* NfcService.swift */; };
+		43FE03F99D4597E0BFC561A9 /* Chime.swift in Sources */ = {isa = PBXBuildFile; fileRef = 236667353AE8ACDD3C173D88 /* Chime.swift */; };
+		45DE9D27A5D62EFD210E0F46 /* PortsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3FEB808E8621410208C0CEB /* PortsView.swift */; };
+		45FF81F590742DEFF6E51E7C /* ClipboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54060EC795926EBC0F03F288 /* ClipboardView.swift */; };
+		542C70EAC67771DE150F40BE /* AppsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E9C512238FF681E97E953B7 /* AppsView.swift */; };
+		60EC57FC27F6A0D5F46E310B /* SystemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39586383884E0FDFBFCE6385 /* SystemViewModel.swift */; };
+		610C5A0C0FAB5EEC32FF3EDE /* ClockViewModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07AA345FCF975B3B988F644 /* ClockViewModels.swift */; };
 		610DAE39418A42EEFDFE24E8 /* DeckModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7273439DA5731A90426FC837 /* DeckModel.swift */; };
+		66135C0CBDF8BC1986CD4C11 /* ClockFormatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B458276D4A0949E533DE7B7 /* ClockFormatters.swift */; };
+		72BAB2CE226AAA90BFD4F3BF /* IPViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D38E96DFBE587AB4728C68E /* IPViewModel.swift */; };
+		7C8955D608B790C444EED359 /* SystemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99DEB6E155B9E974F49F0996 /* SystemView.swift */; };
+		84CD813BB0C9197C94681EF9 /* ByteFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E9D9936D1B92851F036E0A2 /* ByteFormatter.swift */; };
 		8E7E23060659977B32C3F8B0 /* NdefPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42129EB865E6CD4FCE95DD21 /* NdefPayload.swift */; };
 		94E409AF9316DFD7E4067A27 /* StreamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F84C30DC02BDDE1E3082C09 /* StreamView.swift */; };
+		99D03B27EC0E68399CFA14CF /* IPView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99202B9AD1C86E63B31F97F2 /* IPView.swift */; };
+		A5FEBDA4972C7D8EC92D7CAE /* ClockModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50C580C3E887112F52C5E23D /* ClockModels.swift */; };
+		D520B1B0B5D03C3147B47BD2 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7159CE09E9C2B70AE02BF241 /* Theme.swift */; };
 		D8EB9B4DFDD9EEC9356B58CF /* TagInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE70EC9BB30FB61D7A246E7 /* TagInfo.swift */; };
+		D9F68F848A8C10A1BAFEAEAE /* IPModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF5C239FD8104A32304C9685 /* IPModels.swift */; };
+		DD485BCC642871BDCEA53228 /* HostModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01324145BD5E99E397DA6D42 /* HostModels.swift */; };
+		E565431A774E6E7F2A48924A /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4D90EC6B739E944423CF327 /* Components.swift */; };
 		E92F66CC79AE4735C311E366 /* DeckClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 003E86F76FFE5F34E8266046 /* DeckClient.swift */; };
 		EE2BD0FBDD41DBDA3BD0F3CD /* NfcView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177E0D88B07D1461398126F9 /* NfcView.swift */; };
+		EF175E7A13804056DBC91E24 /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90EDB313C5C88B45887765D /* SystemMonitor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		003E86F76FFE5F34E8266046 /* DeckClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckClient.swift; sourceTree = "<group>"; };
+		01324145BD5E99E397DA6D42 /* HostModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostModels.swift; sourceTree = "<group>"; };
+		0AF3D914794D99A872FA3006 /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
 		177E0D88B07D1461398126F9 /* NfcView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NfcView.swift; sourceTree = "<group>"; };
+		236667353AE8ACDD3C173D88 /* Chime.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Chime.swift; sourceTree = "<group>"; };
+		26129C4710FFA5AAE6AAC14C /* DeckPagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckPagerView.swift; sourceTree = "<group>"; };
 		2DE70EC9BB30FB61D7A246E7 /* TagInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagInfo.swift; sourceTree = "<group>"; };
+		39586383884E0FDFBFCE6385 /* SystemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemViewModel.swift; sourceTree = "<group>"; };
 		42129EB865E6CD4FCE95DD21 /* NdefPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NdefPayload.swift; sourceTree = "<group>"; };
+		50C580C3E887112F52C5E23D /* ClockModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockModels.swift; sourceTree = "<group>"; };
+		54060EC795926EBC0F03F288 /* ClipboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardView.swift; sourceTree = "<group>"; };
 		6F4A7076B8B6D7FD83C855B0 /* OpenDeck.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OpenDeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7159CE09E9C2B70AE02BF241 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		7187E925DC7886DBAF28C2C8 /* ClockViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockViews.swift; sourceTree = "<group>"; };
 		7273439DA5731A90426FC837 /* DeckModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckModel.swift; sourceTree = "<group>"; };
 		7993B9BCD7144E53989A0670 /* NdefRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NdefRecord.swift; sourceTree = "<group>"; };
+		7B458276D4A0949E533DE7B7 /* ClockFormatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockFormatters.swift; sourceTree = "<group>"; };
+		7E9C512238FF681E97E953B7 /* AppsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppsView.swift; sourceTree = "<group>"; };
 		827F6D7A6B79BE150B73D89D /* OpenDeckApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDeckApp.swift; sourceTree = "<group>"; };
+		8D38E96DFBE587AB4728C68E /* IPViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPViewModel.swift; sourceTree = "<group>"; };
 		8D88CD2BB3A5DA58FF6B0817 /* NfcService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NfcService.swift; sourceTree = "<group>"; };
+		8E9D9936D1B92851F036E0A2 /* ByteFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteFormatter.swift; sourceTree = "<group>"; };
 		8F84C30DC02BDDE1E3082C09 /* StreamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamView.swift; sourceTree = "<group>"; };
+		99202B9AD1C86E63B31F97F2 /* IPView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPView.swift; sourceTree = "<group>"; };
+		99DEB6E155B9E974F49F0996 /* SystemView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemView.swift; sourceTree = "<group>"; };
 		9B7C3251379818A5FAB03BB2 /* OpenDeck.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenDeck.entitlements; sourceTree = "<group>"; };
+		A4D90EC6B739E944423CF327 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		A59C47DF857667A27D1AF400 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B3882AF2C60FF97FF1832BAC /* WeatherService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherService.swift; sourceTree = "<group>"; };
+		C07AA345FCF975B3B988F644 /* ClockViewModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClockViewModels.swift; sourceTree = "<group>"; };
+		C90EDB313C5C88B45887765D /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
+		CF5C239FD8104A32304C9685 /* IPModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPModels.swift; sourceTree = "<group>"; };
 		DD47397DB618F39DD183D3B3 /* NdefCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NdefCodec.swift; sourceTree = "<group>"; };
+		E3FEB808E8621410208C0CEB /* PortsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PortsView.swift; sourceTree = "<group>"; };
 		FF690220B94E1BEABB52FDE2 /* ConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		02EBE9B30340B664A0C6E3BC /* Host */ = {
+			isa = PBXGroup;
+			children = (
+				7E9C512238FF681E97E953B7 /* AppsView.swift */,
+				01324145BD5E99E397DA6D42 /* HostModels.swift */,
+				E3FEB808E8621410208C0CEB /* PortsView.swift */,
+			);
+			path = Host;
+			sourceTree = "<group>";
+		};
+		2F6A1DB0A63DF3608792AC37 /* IP */ = {
+			isa = PBXGroup;
+			children = (
+				CF5C239FD8104A32304C9685 /* IPModels.swift */,
+				99202B9AD1C86E63B31F97F2 /* IPView.swift */,
+				8D38E96DFBE587AB4728C68E /* IPViewModel.swift */,
+			);
+			path = IP;
+			sourceTree = "<group>";
+		};
 		4C6ECFDFDDC01E8E625033F8 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -49,14 +111,22 @@
 		4DB0664DBCCA6B052B0ABED3 /* OpenDeck */ = {
 			isa = PBXGroup;
 			children = (
+				A4D90EC6B739E944423CF327 /* Components.swift */,
 				FF690220B94E1BEABB52FDE2 /* ConnectView.swift */,
 				003E86F76FFE5F34E8266046 /* DeckClient.swift */,
 				7273439DA5731A90426FC837 /* DeckModel.swift */,
+				26129C4710FFA5AAE6AAC14C /* DeckPagerView.swift */,
 				A59C47DF857667A27D1AF400 /* Info.plist */,
 				9B7C3251379818A5FAB03BB2 /* OpenDeck.entitlements */,
 				827F6D7A6B79BE150B73D89D /* OpenDeckApp.swift */,
 				8F84C30DC02BDDE1E3082C09 /* StreamView.swift */,
+				7159CE09E9C2B70AE02BF241 /* Theme.swift */,
+				E86561F9244A95AB66DC3B4C /* Clipboard */,
+				5E1BFF2FBD0D00F8A9E1146D /* Clock */,
+				02EBE9B30340B664A0C6E3BC /* Host */,
+				2F6A1DB0A63DF3608792AC37 /* IP */,
 				534E0A45225B8D0D82E42502 /* NFC */,
+				A70393C1637551A2CDCE149A /* System */,
 			);
 			path = OpenDeck;
 			sourceTree = "<group>";
@@ -74,12 +144,45 @@
 			path = NFC;
 			sourceTree = "<group>";
 		};
+		5E1BFF2FBD0D00F8A9E1146D /* Clock */ = {
+			isa = PBXGroup;
+			children = (
+				236667353AE8ACDD3C173D88 /* Chime.swift */,
+				7B458276D4A0949E533DE7B7 /* ClockFormatters.swift */,
+				50C580C3E887112F52C5E23D /* ClockModels.swift */,
+				C07AA345FCF975B3B988F644 /* ClockViewModels.swift */,
+				7187E925DC7886DBAF28C2C8 /* ClockViews.swift */,
+				B3882AF2C60FF97FF1832BAC /* WeatherService.swift */,
+			);
+			path = Clock;
+			sourceTree = "<group>";
+		};
 		7B4F74FB0C1BBBF422FC8AEA = {
 			isa = PBXGroup;
 			children = (
 				4DB0664DBCCA6B052B0ABED3 /* OpenDeck */,
 				4C6ECFDFDDC01E8E625033F8 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		A70393C1637551A2CDCE149A /* System */ = {
+			isa = PBXGroup;
+			children = (
+				8E9D9936D1B92851F036E0A2 /* ByteFormatter.swift */,
+				C90EDB313C5C88B45887765D /* SystemMonitor.swift */,
+				99DEB6E155B9E974F49F0996 /* SystemView.swift */,
+				39586383884E0FDFBFCE6385 /* SystemViewModel.swift */,
+			);
+			path = System;
+			sourceTree = "<group>";
+		};
+		E86561F9244A95AB66DC3B4C /* Clipboard */ = {
+			isa = PBXGroup;
+			children = (
+				0AF3D914794D99A872FA3006 /* ClipboardStore.swift */,
+				54060EC795926EBC0F03F288 /* ClipboardView.swift */,
+			);
+			path = Clipboard;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -137,17 +240,38 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				542C70EAC67771DE150F40BE /* AppsView.swift in Sources */,
+				84CD813BB0C9197C94681EF9 /* ByteFormatter.swift in Sources */,
+				43FE03F99D4597E0BFC561A9 /* Chime.swift in Sources */,
+				1D72DF0453A7ECD8D54EF9AD /* ClipboardStore.swift in Sources */,
+				45FF81F590742DEFF6E51E7C /* ClipboardView.swift in Sources */,
+				66135C0CBDF8BC1986CD4C11 /* ClockFormatters.swift in Sources */,
+				A5FEBDA4972C7D8EC92D7CAE /* ClockModels.swift in Sources */,
+				610C5A0C0FAB5EEC32FF3EDE /* ClockViewModels.swift in Sources */,
+				1792024D774B4063068EF5EC /* ClockViews.swift in Sources */,
+				E565431A774E6E7F2A48924A /* Components.swift in Sources */,
 				405AAD69C301E4990144E3C6 /* ConnectView.swift in Sources */,
 				E92F66CC79AE4735C311E366 /* DeckClient.swift in Sources */,
 				610DAE39418A42EEFDFE24E8 /* DeckModel.swift in Sources */,
+				1130192C3766FC6DF5E08D18 /* DeckPagerView.swift in Sources */,
+				DD485BCC642871BDCEA53228 /* HostModels.swift in Sources */,
+				D9F68F848A8C10A1BAFEAEAE /* IPModels.swift in Sources */,
+				99D03B27EC0E68399CFA14CF /* IPView.swift in Sources */,
+				72BAB2CE226AAA90BFD4F3BF /* IPViewModel.swift in Sources */,
 				232ADE5535ADD6897F9674A1 /* NdefCodec.swift in Sources */,
 				8E7E23060659977B32C3F8B0 /* NdefPayload.swift in Sources */,
 				0B63998FA84DFE2A7D921B1C /* NdefRecord.swift in Sources */,
 				4186AE318A62ECDEC39B8376 /* NfcService.swift in Sources */,
 				EE2BD0FBDD41DBDA3BD0F3CD /* NfcView.swift in Sources */,
 				3D2CE5D98FE99C6E6BF66242 /* OpenDeckApp.swift in Sources */,
+				45DE9D27A5D62EFD210E0F46 /* PortsView.swift in Sources */,
 				94E409AF9316DFD7E4067A27 /* StreamView.swift in Sources */,
+				EF175E7A13804056DBC91E24 /* SystemMonitor.swift in Sources */,
+				7C8955D608B790C444EED359 /* SystemView.swift in Sources */,
+				60EC57FC27F6A0D5F46E310B /* SystemViewModel.swift in Sources */,
 				D8EB9B4DFDD9EEC9356B58CF /* TagInfo.swift in Sources */,
+				D520B1B0B5D03C3147B47BD2 /* Theme.swift in Sources */,
+				40929FC5E81C74CFA1169A1E /* WeatherService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

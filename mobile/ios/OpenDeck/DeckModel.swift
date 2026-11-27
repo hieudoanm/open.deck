@@ -10,9 +10,13 @@ final class DeckModel: ObservableObject {
     @Published var connected = false
     @Published var frame: UIImage?
     @Published var hello: HelloInfo?
+    @Published var desktopStats: DesktopStats?
+
+    // Dashboard page state — the phone lies horizontally and pages are
+    // swiped left/right (parity with Android's DeckViewModel.page).
+    @Published var page: DeckPage = .deck
 
     // NFC tool state (parity with Android's DeckViewModel)
-    @Published var showNfc = false
     @Published var nfcInfo: TagInfo?
     @Published var nfcMessage: String?
     @Published var nfcBusy = false
@@ -30,6 +34,9 @@ final class DeckModel: ObservableObject {
         client.onHello = { [weak self] h in
             self?.hello = h
         }
+        client.onStats = { [weak self] s in
+            self?.desktopStats = s
+        }
         client.onState = { [weak self] ok, msg in
             guard let self else { return }
             self.status = msg
@@ -37,6 +44,7 @@ final class DeckModel: ObservableObject {
             if !ok {
                 self.frame = nil
                 self.hello = nil
+                self.desktopStats = nil
             }
         }
     }
@@ -82,11 +90,11 @@ final class DeckModel: ObservableObject {
         if nfcMessage == nil {
             nfcMessage = "Tap Scan, then hold your iPhone near a tag"
         }
-        showNfc = true
+        page = .nfc
     }
 
     func closeNfc() {
-        showNfc = false
+        page = .deck
         nfcInfo = nil
         nfcMessage = nil
     }
@@ -101,7 +109,7 @@ final class DeckModel: ObservableObject {
             nfcBusy = false
             if let uri = Self.connectURI(in: info), let url = URL(string: uri) {
                 handleOpenURL(url)
-                showNfc = false
+                page = .deck
                 nfcMessage = "Pairing details filled — tap Connect"
             } else {
                 nfcInfo = info

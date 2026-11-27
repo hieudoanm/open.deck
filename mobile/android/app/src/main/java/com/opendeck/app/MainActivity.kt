@@ -9,7 +9,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +29,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.IntSize
@@ -43,11 +49,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    when {
-                        vm.showNfc -> NfcScreen(vm)
-                        vm.connState == ConnState.CONNECTED -> DeckScreen(vm)
-                        else -> ConnectScreen(vm)
-                    }
+                    DeckPager(vm)
                 }
             }
         }
@@ -95,6 +97,72 @@ class MainActivity : ComponentActivity() {
             port = data.getQueryParameter("port"),
             token = data.getQueryParameter("token"),
         )
+    }
+}
+
+/// Swipeable dashboard pages — the phone is meant to lie horizontally like a
+/// Stream Deck (parity with iOS DeckPagerView).
+enum class DeckPage { DECK, CLOCK, SYSTEM, IP, PORTS, APPS, CLIPBOARD, NFC }
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun DeckPager(vm: DeckViewModel) {
+    val pagerState = rememberPagerState(
+        initialPage = vm.page.ordinal,
+        pageCount = { DeckPage.entries.size },
+    )
+    val scope = rememberCoroutineScope()
+
+    // Pager swipe -> view model
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.collect { page ->
+            vm.page = DeckPage.entries[page]
+        }
+    }
+    // View model -> pager (NFC deep links, dots)
+    LaunchedEffect(vm.page) {
+        if (pagerState.settledPage != vm.page.ordinal) {
+            pagerState.animateScrollToPage(vm.page.ordinal)
+        }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+            when (DeckPage.entries[page]) {
+                DeckPage.DECK ->
+                    if (vm.connState == ConnState.CONNECTED) DeckScreen(vm) else ConnectScreen(vm)
+                DeckPage.CLOCK -> ClockScreen()
+                DeckPage.SYSTEM -> SystemScreen(vm)
+                DeckPage.IP -> IPScreen()
+                DeckPage.PORTS -> PortsScreen(vm)
+                DeckPage.APPS -> AppsScreen(vm)
+                DeckPage.CLIPBOARD -> ClipboardScreen()
+                DeckPage.NFC -> NfcScreen(vm)
+            }
+        }
+        // Tappable page dots — needed on the Deck page, whose touch stream
+        // consumes drags for mouse control.
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            DeckPage.entries.forEach { p ->
+                val selected = vm.page == p
+                Box(
+                    Modifier
+                        .size(width = if (selected) 18.dp else 6.dp, height = 6.dp)
+                        .background(
+                            if (selected) Color(0xFF3B82F6) else Color.White.copy(alpha = 0.3f),
+                            androidx.compose.foundation.shape.CircleShape,
+                        )
+                        .clickable {
+                            scope.launch { pagerState.animateScrollToPage(p.ordinal) }
+                        },
+                )
+            }
+        }
     }
 }
 

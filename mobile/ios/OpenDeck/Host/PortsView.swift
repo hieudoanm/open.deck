@@ -1,0 +1,112 @@
+import SwiftUI
+
+/// Listening ports on the desktop host — fetched from `GET /ports`.
+/// Port of omni's Ports view (lsof discovery, search, listening count).
+struct PortsView: View {
+    @ObservedObject var model: DeckModel
+    @State private var ports: [PortEntry] = []
+    @State private var query = ""
+    @State private var error: String?
+
+    private var filtered: [PortEntry] {
+        let q = query.trimmingCharacters(in: .whitespaces)
+        return q.isEmpty ? ports : ports.filter { $0.matches(q) }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            Divider().overlay(DeckTheme.stroke)
+            if let error {
+                EmptyState("Ports unavailable", error)
+            } else if filtered.isEmpty {
+                EmptyState("No ports", ports.isEmpty ? "No listening ports found" : "No matches")
+            } else {
+                List(filtered) { port in
+                    PortRow(port: port)
+                        .listRowBackground(DeckTheme.surface)
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+            }
+        }
+        .task { await poll() }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: DeckTheme.Spacing.sm) {
+            HStack {
+                Text("PORTS")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(DeckTheme.muted)
+                    .tracking(1.5)
+                Spacer()
+                Text("\(ports.filter { $0.state == "listening" }.count) listening")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(DeckTheme.faint)
+            }
+            TextField("Search process, port, pid…", text: $query)
+                .textFieldStyle(.plain)
+                .padding(.horizontal, DeckTheme.Spacing.md)
+                .padding(.vertical, DeckTheme.Spacing.sm)
+                .background(DeckTheme.surfaceRaised, in: RoundedRectangle(cornerRadius: 8))
+        }
+        .padding(DeckTheme.Spacing.lg)
+    }
+
+    private func poll() async {
+        while !Task.isCancelled {
+            if model.connected, let api = HostAPI(host: model.host, port: model.port) {
+                do {
+                    ports = try await api.ports()
+                    error = nil
+                } catch {
+                    self.error = "Unable to read ports"
+                }
+            }
+            try? await Task.sleep(for: .seconds(5))
+        }
+    }
+}
+
+private struct EmptyState: View {
+    let title: String
+    let subtitle: String
+
+    init(_ title: String, _ subtitle: String) {
+        self.title = title
+        self.subtitle = subtitle
+    }
+
+    var body: some View {
+        VStack(spacing: DeckTheme.Spacing.sm) {
+            Text(title).foregroundStyle(DeckTheme.muted)
+            Text(subtitle).font(.caption).foregroundStyle(DeckTheme.faint)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 48)
+    }
+}
+
+private struct PortRow: View {
+    let port: PortEntry
+
+    var body: some View {
+        HStack(spacing: DeckTheme.Spacing.md) {
+            CapsuleBadge(text: port.protocolType.uppercased(), tint: port.protocolType == "tcp" ? DeckTheme.accent : .purple)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(port.process.isEmpty ? "pid \(port.pid)" : port.process)
+                    .font(.callout.weight(.medium))
+                    .lineLimit(1)
+                Text("\(port.endpoint) · \(port.state)")
+                    .font(.caption.monospaced())
+                    .foregroundStyle(DeckTheme.muted)
+            }
+            Spacer()
+            Text("pid \(port.pid)")
+                .font(.caption2.monospaced())
+                .foregroundStyle(DeckTheme.faint)
+        }
+        .padding(.vertical, DeckTheme.Spacing.xs)
+    }
+}
