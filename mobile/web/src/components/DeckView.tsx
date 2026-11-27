@@ -8,10 +8,12 @@ import type {
   StatsMsg,
   StatusMsg
 } from '../types';
+import { BOOKMARKS } from '../data/bookmarks';
 import { AppsPage, PortsPage } from './Pages';
 import { SystemPage } from './SystemPage';
+import { BookmarksPage, chunkBookmarks } from './BookmarksPage';
 
-const PAGE_COUNT = 3;
+const BOOKMARK_PAGES = chunkBookmarks(BOOKMARKS);
 
 export function DeckView({
   host,
@@ -125,6 +127,19 @@ export function DeckView({
 
   const startX = useRef<number | null>(null);
 
+  const PAGE_COUNT = 3 + BOOKMARK_PAGES.length;
+
+  const openUrl = useCallback(
+    (url: string) => {
+      fetch(`${base}/open?token=${encodeURIComponent(token)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      }).catch(() => {});
+    },
+    [base, token]
+  );
+
   const wakeBadge =
     wake == null ? null : wake === 'on' ? (
       <span className="wake-badge on" title="screen wake lock">
@@ -194,6 +209,16 @@ export function DeckView({
           <section className="page">
             <AppsPage apps={apps} />
           </section>
+          {BOOKMARK_PAGES.map((items, i) => (
+            <section className="page" key={i}>
+              <BookmarksPage
+                items={items}
+                index={i}
+                total={BOOKMARK_PAGES.length}
+                onOpen={openUrl}
+              />
+            </section>
+          ))}
         </div>
       </div>
 

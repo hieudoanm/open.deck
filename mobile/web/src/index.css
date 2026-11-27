@@ -306,3 +306,57 @@ body {
   font-size: clamp(24px, 6.5cqh, 40px);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Bookmark tiles ---------- */
+.bm-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(0, 1fr);
+  gap: clamp(6px, 1.4cqh, 12px);
+}
+.bm-tile {
+  background: var(--color-base-200);
+  border: 1px solid var(--color-neutral);
+  border-radius: 14px;
+  padding: clamp(8px, 1.6cqh, 14px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(2px, 0.8cqh, 6px);
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-base-content);
+  min-height: 0;
+  overflow: hidden;
+}
+.bm-tile:active {
+  border-color: var(--color-primary);
+  background: var(--color-base-300);
+}
+.bm-tile.opened {
+  border-color: var(--color-success);
+}
+.bm-icon {
+  font-size: clamp(16px, 3cqh, 24px);
+  color: var(--color-primary);
+  flex: 0 0 auto;
+}
+.bm-label {
+  font-size: clamp(12px, 2.2cqh, 16px);
+  font-weight: 650;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.bm-desc {
+  font-size: clamp(9px, 1.6cqh, 11.5px);
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}

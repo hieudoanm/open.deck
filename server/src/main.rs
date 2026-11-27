@@ -135,6 +135,11 @@ struct KillRequest {
     force: bool,
 }
 
+#[derive(Deserialize)]
+struct OpenUrlRequest {
+    url: String,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
@@ -189,6 +194,7 @@ async fn main() -> Result<()> {
         .route("/actions/run", post(actions_run_handler))
         .route("/ports", get(ports_handler))
         .route("/ports/kill", post(ports_kill_handler))
+        .route("/open", post(open_handler))
         .route("/apps", get(apps_handler))
         .route("/clipboard", get(clipboard_get_handler))
         .route("/clipboard", post(clipboard_write_handler))
@@ -370,6 +376,57 @@ async fn ports_kill_handler(
         Ok(Err(e)) => (StatusCode::BAD_REQUEST, e).into_response(),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     }
+}
+
+/// Open a URL in the host's default browser. The OS opener commands reuse a
+/// running browser instance when one exists. Token required — arbitrary URL
+/// launching is a remote-execution surface.
+async fn open_handler(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<HashMap<String, String>>,
+    Json(req): Json<OpenUrlRequest>,
+) -> Response {
+    let provided = params.get("token").cloned().unwrap_or_default();
+    if provided != state.token {
+        return (StatusCode::UNAUTHORIZED, "invalid pairing token").into_response();
+    }
+    let url = req.url.trim().to_string();
+    let valid = url.starts_with("https://") || url.starts_with("http://");
+    if !valid || url.len() > 2048 {
+        return (StatusCode::BAD_REQUEST, "url must be http(s)").into_response();
+    }
+    let result = tokio::task::spawn_blocking(move || open_url(url)).await;
+    match result {
+        Ok(Ok(())) => (StatusCode::OK, "opened").into_response(),
+        Ok(Err(e)) => (StatusCode::INTERNAL_SERVER_ERROR, e).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+    }
+}
+
+fn open_url(url: String) -> std::result::Result<(), String> {
+    #[cfg(target_os = "macos")]
+    let mut cmd = {
+        let mut c = std::process::Command::new("open");
+        c.arg(&url);
+        c
+    };
+    #[cfg(target_os = "windows")]
+    let mut cmd = {
+        let mut c = std::process::Command::new("rundll32");
+        c.args(["url.dll,FileProtocolHandler", &url]);
+        c
+    };
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let mut cmd = {
+        let mut c = std::process::Command::new("xdg-open");
+        c.arg(&url);
+        c
+    };
+    cmd.stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null());
+    cmd.spawn()
+        .map(|_| ())
+        .map_err(|e| format!("failed to open browser: {e}"))
 }
 
 /// Clipboard contents are sensitive — token required on all three verbs.
