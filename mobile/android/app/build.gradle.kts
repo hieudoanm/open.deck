@@ -6,6 +6,7 @@ plugins {
 android {
     namespace = "com.opendeck.app"
     compileSdk = 37
+    compileSdkMinor = 1
 
     defaultConfig {
         applicationId = "com.opendeck.app"
