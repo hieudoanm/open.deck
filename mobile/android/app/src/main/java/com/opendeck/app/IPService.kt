@@ -31,7 +31,7 @@ data class DNSResponse(val status: Int, val answers: List<String>) {
     val answersText: String get() = if (answers.isEmpty()) "No A records found" else answers.joinToString("\n")
 }
 
-class IPLookupException(val message: String) : Exception(message)
+class IPLookupException(override val message: String) : Exception(message)
 
 object IPLookupService {
     private fun fetch(url: String, accept: String? = null): Pair<String, Int> {

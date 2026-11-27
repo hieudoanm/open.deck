@@ -35,7 +35,7 @@ import kotlin.math.sin
 private val Accent = Color(0xFF3B82F6)
 private val Surface = Color(0xFF1C1F24)
 private val SurfaceRaised = Color(0xFF262A31)
-private val Stroke = Color(0xFF383D46)
+private val StrokeColor = Color(0xFF383D46)
 private val Muted = Color(0xFF8A919C)
 private val Faint = Color(0xFF5C636E)
 private val Track = Color(0xFF333943)
@@ -59,7 +59,7 @@ private fun ChipButton(title: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun CircleIconButton(iconDesc: String, size: Int, color: Color, onClick: () -> Unit, enabled: Boolean = true) {
+private fun CircleIconButton(iconDesc: String, size: Int, color: Color, enabled: Boolean = true, onClick: () -> Unit) {
     Surface(
         color = color,
         shape = CircleShape,
@@ -185,7 +185,7 @@ private fun WatchfaceContent() {
                 val c = center
                 val r = size.minDimension / 2 - 8.dp.toPx()
                 drawCircle(SurfaceRaised)
-                drawCircle(Stroke, style = Stroke(2.dp.toPx()))
+                drawCircle(StrokeColor, style = Stroke(2.dp.toPx()))
                 fun hand(angleDeg: Float, len: Float, color: Color, width: Float) {
                     val rad = Math.toRadians(angleDeg.toDouble() - 90)
                     drawLine(
@@ -252,7 +252,7 @@ private fun WorldClockContent(vm: WorldClockViewModel) {
                         Text("…", color = Muted)
                     }
                 }
-                HorizontalDivider(color = Stroke)
+                HorizontalDivider(color = StrokeColor)
             }
         }
         Text(

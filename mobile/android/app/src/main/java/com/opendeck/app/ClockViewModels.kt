@@ -30,7 +30,7 @@ class WorldClockViewModel(private val scope: CoroutineScope) {
     var weather by mutableStateOf(List<WeatherSample?>(cities.size) { null })
         private set
 
-    private val service = OpenMeteoWeatherService()
+    private val service = OpenMeteoWeatherService
     private var job: Job? = null
     private var lastWeatherFetch = 0L
 
