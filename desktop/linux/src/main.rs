@@ -114,9 +114,10 @@ fn fetch_status(port: u16) -> Option<String> {
 /// Minimal HTTP POST (empty or small JSON body) against a server path.
 fn http_post(port: u16, path_and_query: &str, body: Option<&str>) -> bool {
     let addr = format!("127.0.0.1:{port}");
-    let Ok(mut stream) =
-        TcpStream::connect_timeout(&addr.parse().ok()?, Duration::from_millis(800))
-    else {
+    let Ok(sockaddr) = addr.parse() else {
+        return false;
+    };
+    let Ok(mut stream) = TcpStream::connect_timeout(&sockaddr, Duration::from_millis(800)) else {
         return false;
     };
     let payload = body.unwrap_or("");
