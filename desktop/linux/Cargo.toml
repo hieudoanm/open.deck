@@ -1,0 +1,18 @@
+[package]
+name = "opendeck-linux"
+version = "0.1.0"
+edition = "2021"
+description = "OpenDeck desktop companion: run the OpenDeck server with a native UI"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+gtk4 = "0.11"
+libadwaita = "0.9"
+glib = "0.22"
+qrcode = "0.14"
+
+[package.metadata.bundle]
+appid = "dev.opendeck.linux"
+name = "OpenDeck"
+icon = []
+categories = ["Utility"]

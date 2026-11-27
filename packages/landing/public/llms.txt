@@ -1,0 +1,28 @@
+# OpenDeck
+
+> Turn an old phone into a "Stream Deck"-style companion for your PC. A Rust
+> server streams the desktop over WebSocket and injects touch/keyboard input
+> back — open source, local-first, for Windows, macOS, Linux, Android and iOS.
+
+- Repository: https://github.com/hieudoanm/open.deck
+- Site: https://hieudoanm.github.io/open.deck/
+- Protocol: https://github.com/hieudoanm/open.deck/blob/master/docs/PROTOCOL.md
+
+## Documentation
+
+### getting-started
+
+- [Installation](https://hieudoanm.github.io/open.deck/docs/getting-started/installation/)
+- [Quickstart](https://hieudoanm.github.io/open.deck/docs/getting-started/quickstart/)
+### concepts
+
+- [Architecture](https://hieudoanm.github.io/open.deck/docs/concepts/architecture/)
+- [Protocol](https://hieudoanm.github.io/open.deck/docs/concepts/protocol/)
+### guides
+
+- [Server](https://hieudoanm.github.io/open.deck/docs/guides/server/)
+- [Mobile app](https://hieudoanm.github.io/open.deck/docs/guides/mobile-app/)
+- [Desktop apps](https://hieudoanm.github.io/open.deck/docs/guides/desktop-apps/)
+### overview
+
+- [OpenDeck documentation](https://hieudoanm.github.io/open.deck/docs/)

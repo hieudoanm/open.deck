@@ -1,0 +1,456 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server-quality:
+    name: Server - Quality
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2.9.3
+        with:
+          workspaces: server
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config clang libclang-dev \
+            libpipewire-0.3-dev libspa-0.2-dev libdrm-dev libgbm-dev \
+            libegl-dev libwayland-dev libxkbcommon-dev libxcb1-dev \
+            libxcb-randr0-dev libx11-dev libxrandr-dev
+
+      - name: Rust fmt
+        working-directory: server
+        run: cargo fmt --all -- --check
+
+      - name: Rust clippy
+        working-directory: server
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Run Rust tests
+        working-directory: server
+        run: cargo test
+
+  server-build:
+    name: Server - Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    if: github.event_name != 'pull_request'
+    needs: server-quality
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - macos-15-intel
+          - windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2.9.3
+        with:
+          workspaces: server
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config clang libclang-dev \
+            libpipewire-0.3-dev libspa-0.2-dev libdrm-dev libgbm-dev \
+            libegl-dev libwayland-dev libxkbcommon-dev libxcb1-dev \
+            libxcb-randr0-dev libx11-dev libxrandr-dev
+
+      - name: Build release binary
+        working-directory: server
+        run: cargo build --release
+
+      # Rename to open-deck-server-<target-triple> so artifacts don't collide.
+      - name: Rename binary for release
+        shell: bash
+        working-directory: server
+        run: |
+          case "${{ matrix.os }}" in
+            ubuntu-latest) mv target/release/open-deck-server open-deck-server-x86_64-unknown-linux-gnu ;;
+            macos-latest) mv target/release/open-deck-server open-deck-server-aarch64-apple-darwin ;;
+            macos-15-intel) mv target/release/open-deck-server open-deck-server-x86_64-apple-darwin ;;
+            windows-latest) mv target/release/open-deck-server.exe open-deck-server-x86_64-pc-windows-msvc.exe ;;
+          esac
+
+      - name: Upload server binary
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: server-open-deck-${{ matrix.os }}
+          path: server/open-deck-server-*
+          if-no-files-found: error
+          retention-days: 7
+
+  # Merge the per-OS server binaries into a single `server-open-deck` artifact.
+  server-artifacts:
+    name: Server - Artifact
+    needs: server-build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download server binaries
+        uses: actions/download-artifact@v8.0.2
+        with:
+          pattern: server-open-deck-*
+          path: dist
+          merge-multiple: true
+
+      - name: Upload merged server artifact
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: server-open-deck
+          path: dist
+          if-no-files-found: error
+          retention-days: 7
+
+  desktop-linux:
+    name: Desktop - Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libgtk-4-dev libadwaita-1-dev
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2.9.3
+        with:
+          workspaces: desktop/linux
+
+      - name: Build Linux companion
+        working-directory: desktop/linux
+        run: cargo build --release
+
+      - name: Rename binary for release
+        working-directory: desktop/linux
+        run: cp target/release/opendeck-linux desktop-linux-open-deck
+
+      - name: Upload Linux companion
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: desktop-linux-open-deck
+          path: desktop/linux/desktop-linux-open-deck
+          if-no-files-found: error
+          retention-days: 7
+
+  mobile-android:
+    name: Mobile - Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v6.3.0
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle
+        uses: actions/cache@v6.1.0
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('mobile/android/**/*.gradle*', 'mobile/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Build debug APK
+        working-directory: mobile/android
+        run: ./gradlew assembleDebug --no-daemon --console=plain
+
+      - name: Prepare APK artifact
+        shell: bash
+        run: cp mobile/android/app/build/outputs/apk/debug/app-debug.apk mobile-android-open-deck.apk
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: mobile-android-open-deck
+          path: mobile-android-open-deck.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  mobile-ios:
+    name: Mobile - iOS
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build iOS app
+        working-directory: mobile/ios
+        run: |
+          xcodegen generate
+          xcodebuild -project OpenDeck.xcodeproj -scheme OpenDeck \
+            -destination 'generic/platform=iOS Simulator' \
+            -configuration Debug build CODE_SIGNING_ALLOWED=NO \
+            -derivedDataPath "$GITHUB_WORKSPACE/mobile/ios/build"
+
+      - name: Package iOS app
+        working-directory: mobile/ios
+        run: |
+          cd build/Build/Products/Debug-iphonesimulator
+          zip -qry "$GITHUB_WORKSPACE/mobile/ios/mobile-ios-open-deck.app.zip" OpenDeck.app
+
+      - name: Upload iOS app
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: mobile-ios-open-deck
+          path: mobile/ios/mobile-ios-open-deck.app.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  desktop-macos:
+    name: Desktop - macOS
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build macOS companion
+        working-directory: desktop/macos
+        run: |
+          xcodegen generate
+          xcodebuild -project OpenDeckMac.xcodeproj -scheme OpenDeckMac \
+            -configuration Debug build CODE_SIGNING_ALLOWED=NO \
+            -derivedDataPath "$GITHUB_WORKSPACE/desktop/macos/build"
+
+      - name: Package macOS companion
+        working-directory: desktop/macos
+        run: |
+          APP="build/Build/Products/Debug/OpenDeckMac.app"
+          STAGE="$(mktemp -d)"
+          cp -R "$APP" "$STAGE/"
+          ln -s /Applications "$STAGE/Applications"
+          hdiutil create -volname OpenDeck -srcfolder "$STAGE" -ov -format UDZO \
+            "$GITHUB_WORKSPACE/desktop/macos/desktop-macos-open-deck.dmg"
+          rm -rf "$STAGE"
+
+      - name: Upload macOS companion
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: desktop-macos-open-deck
+          path: desktop/macos/desktop-macos-open-deck.dmg
+          if-no-files-found: error
+          retention-days: 7
+
+  desktop-windows:
+    name: Desktop - Windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Build WinUI 3 app
+        run: dotnet build desktop/windows/OpenDeckWinUI/OpenDeckWinUI.csproj -c Release -p:Platform=x64 --nologo
+
+      - name: Rename executable for release
+        shell: bash
+        run: |
+          EXE="$(find desktop/windows/OpenDeckWinUI/bin -name OpenDeckWinUI.exe | head -n 1)"
+          cp "$EXE" desktop-windows-open-deck.exe
+
+      - name: Upload Windows companion
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: desktop-windows-open-deck
+          path: desktop-windows-open-deck.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  landing-build:
+    name: Landing - Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6.1.1
+        with:
+          version: 12.23.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build landing (Next.js static export)
+        run: pnpm --filter @opendeck/landing run build
+
+      - name: Delete stale Pages artifacts
+        if: github.ref == 'refs/heads/master'
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId,
+            });
+            for (const artifact of data.artifacts.filter((a) => a.name === "github-pages" && !a.expired)) {
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+              });
+            }
+
+      - name: Upload landing artifact
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: packages/landing/out
+
+  landing-deploy:
+    name: Landing - Deploy
+    needs: landing-build
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v5.0.1
+
+  release:
+    name: Release
+    needs:
+      - server-artifacts
+      - desktop-linux
+      - desktop-macos
+      - desktop-windows
+      - mobile-android
+      - mobile-ios
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Download server binaries
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: server-open-deck
+          path: dist
+
+      - name: Download Linux companion
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: desktop-linux-open-deck
+          path: dist
+
+      - name: Download macOS companion
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: desktop-macos-open-deck
+          path: dist
+
+      - name: Download Windows companion
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: desktop-windows-open-deck
+          path: dist
+
+      - name: Download Android APK
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: mobile-android-open-deck
+          path: dist
+
+      - name: Download iOS app
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: mobile-ios-open-deck
+          path: dist
+
+      - name: Delete existing latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete latest --yes --cleanup-tag || true
+          git push origin :refs/tags/latest || true
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v3.0.4
+        with:
+          tag_name: latest
+          name: OpenDeck (latest)
+          body_path: RELEASE.md
+          files: dist/*

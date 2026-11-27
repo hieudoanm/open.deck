@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <!-- faint deck-grid watermark, right side -->
+  <g transform="translate(860,120)" opacity="0.07" fill="#93c5fd">
+    <rect x="0" y="0" width="56" height="56" rx="12"/>
+    <rect x="68" y="0" width="56" height="56" rx="12"/>
+    <rect x="136" y="0" width="56" height="56" rx="12"/>
+    <rect x="0" y="68" width="56" height="56" rx="12"/>
+    <rect x="68" y="68" width="56" height="56" rx="12" fill="#fbbf24"/>
+    <rect x="136" y="68" width="56" height="56" rx="12"/>
+    <rect x="0" y="136" width="56" height="56" rx="12"/>
+    <rect x="68" y="136" width="56" height="56" rx="12"/>
+    <rect x="136" y="136" width="56" height="56" rx="12"/>
+  </g>
+
+  <!-- logo mark -->
+  <g transform="translate(80,215)">
+    <rect width="200" height="200" rx="44" fill="url(#bg)"/>
+    <rect width="200" height="200" rx="44" fill="url(#sheen)"/>
+    <!-- 3x3 deck grid: 38px cells, 9px gaps, 34px padding -->
+    <g transform="translate(34,34)" fill="#ffffff">
+      <rect x="0"   y="0"   width="38" height="38" rx="8" opacity="0.95"/>
+      <rect x="47"  y="0"   width="38" height="38" rx="8" opacity="0.7"/>
+      <rect x="94"  y="0"   width="38" height="38" rx="8" opacity="0.5"/>
+      <rect x="0"   y="47"  width="38" height="38" rx="8" opacity="0.7"/>
+      <rect x="47"  y="47"  width="38" height="38" rx="8" fill="#fbbf24"/>
+      <rect x="94"  y="47"  width="38" height="38" rx="8" opacity="0.7"/>
+      <rect x="0"   y="94"  width="38" height="38" rx="8" opacity="0.5"/>
+      <rect x="47"  y="94"  width="38" height="38" rx="8" opacity="0.7"/>
+      <rect x="94"  y="94"  width="38" height="38" rx="8" opacity="0.95"/>
+    </g>
+  </g>
+
+  <!-- wordmark + tagline -->
+  <text x="340" y="300" font-family="Inter, system-ui, sans-serif" font-size="72" font-weight="700" fill="#f1f5f9">OpenDeck</text>
+  <text x="340" y="365" font-family="Inter, system-ui, sans-serif" font-size="34" fill="#93c5fd">Your old phone is a Stream Deck.</text>
+  <text x="340" y="430" font-family="Inter, system-ui, sans-serif" font-size="24" fill="#94a3b8">Open source · Windows · macOS · Linux · Android · iOS</text>
+</svg>

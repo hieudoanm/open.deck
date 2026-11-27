@@ -1,0 +1,122 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@plugin 'daisyui' {
+  themes: opendeck --default;
+}
+
+@plugin 'daisyui/theme' {
+  name: 'opendeck';
+  default: true;
+  prefersdark: false;
+  color-scheme: 'light';
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(98% 0 0);
+  --color-base-300: oklch(95% 0 0);
+  --color-base-content: oklch(21% 0.006 250);
+  --color-primary: #2563eb;
+  --color-primary-content: #ffffff;
+  --color-secondary: #1d4ed8;
+  --color-secondary-content: #ffffff;
+  --color-accent: #3b82f6;
+  --color-accent-content: #ffffff;
+  --color-neutral: oklch(14% 0.005 250);
+  --color-neutral-content: oklch(92% 0.004 250);
+  --color-info: oklch(74% 0.16 232.661);
+  --color-info-content: oklch(29% 0.066 243.157);
+  --color-success: oklch(76% 0.177 163.223);
+  --color-success-content: oklch(37% 0.077 168.94);
+  --color-warning: oklch(82% 0.189 84.429);
+  --color-warning-content: oklch(41% 0.112 45.904);
+  --color-error: oklch(71% 0.194 13.428);
+  --color-error-content: oklch(27% 0.105 12.094);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* ---------- docs prose (Tailwind Typography, literal theme values) ---------- */
+
+.prose {
+  --tw-prose-body: var(--color-base-content);
+  --tw-prose-headings: var(--color-base-content);
+  --tw-prose-lead: #6b7280;
+  --tw-prose-links: var(--color-primary);
+  --tw-prose-bold: var(--color-base-content);
+  --tw-prose-counters: #6b7280;
+  --tw-prose-bullets: var(--color-base-300);
+  --tw-prose-hr: var(--color-base-300);
+  --tw-prose-quotes: #6b7280;
+  --tw-prose-quote-borders: var(--color-primary);
+  --tw-prose-captions: #6b7280;
+  --tw-prose-code: var(--color-base-content);
+  --tw-prose-pre-code: #e8e8e8;
+  --tw-prose-pre-bg: #111827;
+  --tw-prose-th-borders: var(--color-base-300);
+  --tw-prose-td-borders: var(--color-base-300);
+}
+
+@plugin 'daisyui/theme' {
+  name: 'opendeck-dark';
+  default: false;
+  prefersdark: false;
+  color-scheme: 'dark';
+  --color-base-100: #0f172a;
+  --color-base-200: #1e293b;
+  --color-base-300: #334155;
+  --color-base-content: #f1f5f9;
+  --color-neutral: #e2e8f0;
+  --color-neutral-content: #0f172a;
+  --color-primary: #3b82f6;
+  --color-primary-content: #ffffff;
+  --color-secondary: #2563eb;
+  --color-secondary-content: #ffffff;
+  --color-accent: #60a5fa;
+  --color-accent-content: #0f172a;
+  --color-info: oklch(74% 0.16 232.661);
+  --color-info-content: oklch(29% 0.066 243.157);
+  --color-success: oklch(76% 0.177 163.223);
+  --color-success-content: oklch(37% 0.077 168.94);
+  --color-warning: oklch(82% 0.189 84.429);
+  --color-warning-content: oklch(41% 0.112 45.904);
+  --color-error: oklch(71% 0.194 13.428);
+  --color-error-content: oklch(27% 0.105 12.094);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+/* theme toggle icons: moon shows in light mode, sun in dark mode */
+[data-theme='opendeck-dark'] .theme-icon-moon,
+[data-theme='opendeck'] .theme-icon-sun {
+  display: none;
+}
+
+[data-theme='opendeck-dark'] .prose {
+  --tw-prose-lead: #9ca3af;
+  --tw-prose-counters: #9ca3af;
+  --tw-prose-quotes: #9ca3af;
+  --tw-prose-captions: #9ca3af;
+}
+
+/* ---------- outline buttons: soften so they don't overpower ---------- */
+
+.btn-outline {
+  border-color: color-mix(in oklab, currentColor 30%, transparent);
+  color: color-mix(in oklab, currentColor 80%, transparent);
+}
+
+.btn-outline:hover {
+  border-color: color-mix(in oklab, currentColor 50%, transparent);
+  background-color: color-mix(in oklab, currentColor 8%, transparent);
+}

@@ -1,0 +1,11 @@
+packages:
+  - 'packages/**'
+  - '!packages/**/out/**'
+  - '!packages/**/.next/**'
+  - '!packages/**/dist/**'
+
+minimumReleaseAge: 0
+
+allowBuilds:
+  '@parcel/watcher': true
+  esbuild: true

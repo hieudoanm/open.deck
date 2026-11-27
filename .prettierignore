@@ -1,0 +1,17 @@
+node_modules/
+pnpm-lock.yaml
+dist/
+out/
+coverage/
+target/
+.turbo/
+.next/
+.gradle/
+.kotlin/
+.cxx/
+local.properties
+build/
+**/build/
+*.tsbuildinfo
+.tracers/
+desktop/**/.build/

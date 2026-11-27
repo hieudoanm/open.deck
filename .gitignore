@@ -1,0 +1,55 @@
+# Node / Turborepo
+node_modules/
+.turbo/
+dist/
+coverage/
+out/
+.next/
+*.tsbuildinfo
+pnpm-debug.log*
+
+# Rust / Cargo
+target/
+**/*.rs.bk
+*.profraw
+*.profdata
+
+# Android / Gradle
+.gradle/
+.kotlin/
+.cxx/
+.cxx.tmp/
+local.properties
+*.iml
+.idea/
+app/build/
+build/
+captures/
+test-results/
+*.keystore
+*.jks
+
+# Desktop / .NET / Swift build outputs
+desktop/**/build/
+desktop/**/dist/
+desktop/**/target/
+desktop/**/.next/
+desktop/**/out/
+desktop/**/.build/
+bin/
+obj/
+*.user
+*.suo
+
+# Secrets and local env
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Tracers
+.tracers-cache/
+.tracers/cache/

@@ -1,0 +1,33 @@
+name: OpenDeck
+options:
+  bundleIdPrefix: com.opendeck
+  deploymentTarget: '16.0'
+targets:
+  OpenDeck:
+    type: application
+    platform: iOS
+    deploymentTarget: '16.0'
+    sources:
+      - OpenDeck
+    info:
+      path: OpenDeck/Info.plist
+      properties:
+        CFBundleDisplayName: OpenDeck
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+        ITSAppUsesNonExemptEncryption: false
+        CFBundleURLTypes:
+          - CFBundleURLName: com.opendeck.app
+            CFBundleURLSchemes:
+              - opendeck
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.opendeck.app
+        SWIFT_VERSION: '5.10'
+        TARGETED_DEVICE_FAMILY: '1,2'

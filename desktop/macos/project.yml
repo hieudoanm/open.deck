@@ -1,0 +1,23 @@
+name: OpenDeckMac
+options:
+  bundleIdPrefix: dev.opendeck
+  deploymentTarget: '14.0'
+targets:
+  OpenDeckMac:
+    type: application
+    platform: macOS
+    deploymentTarget: '14.0'
+    sources:
+      - OpenDeckMac
+    info:
+      path: OpenDeckMac/Info.plist
+      properties:
+        CFBundleName: OpenDeck
+        CFBundleDisplayName: OpenDeck
+        LSMinimumSystemVersion: '14.0'
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.opendeck.macos
+        SWIFT_VERSION: '5.10'
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_HARDENED_RUNTIME: YES
