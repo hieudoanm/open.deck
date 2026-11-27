@@ -24,7 +24,7 @@ use axum::{
 };
 use clap::Parser;
 use futures_util::{SinkExt, StreamExt};
-use rand::Rng;
+use rand::distr::{Alphanumeric, SampleString};
 use tokio::sync::{broadcast, mpsc};
 use tower_http::cors::CorsLayer;
 use tracing::{info, warn};
@@ -88,10 +88,8 @@ async fn main() -> Result<()> {
 
     let args = Args::parse();
     let token = args.token.unwrap_or_else(|| {
-        let mut rng = rand::rng();
-        (0..8)
-            .map(|_| rng.sample(rand::distr::Alphanumeric) as char)
-            .collect::<String>()
+        Alphanumeric
+            .sample_string(&mut rand::rng(), 8)
             .to_uppercase()
     });
 
