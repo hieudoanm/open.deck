@@ -103,7 +103,8 @@
 
                 <!-- Actions -->
                 <Expander Header="Actions">
-                    <ItemsControl x:Name="ActionsList" Margin="0,8,0,0">
+                    <StackPanel Margin="0,8,0,0">
+                    <ItemsControl x:Name="ActionsList">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal" Spacing="8"/>
@@ -118,6 +119,7 @@
                     </ItemsControl>
                     <TextBlock x:Name="NoActionsText" Text="No actions available."
                                Opacity="0.5" FontSize="12" Margin="0,8,0,0"/>
+                    </StackPanel>
                 </Expander>
 
                 <!-- Settings -->
