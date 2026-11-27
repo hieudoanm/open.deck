@@ -33,7 +33,7 @@ object NfcTags {
             }
         }
         return NfcTagInfo(
-            techs = tag.techList.map { it.name.substringAfterLast('.') },
+            techs = tag.techList.map { it.substringAfterLast('.') },
             records = records,
             connectUri = connectUri,
         )

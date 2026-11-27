@@ -22,6 +22,7 @@ targets:
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
         ITSAppUsesNonExemptEncryption: false
+        NFCReaderUsageDescription: OpenDeck uses NFC to read and write tags.
         CFBundleURLTypes:
           - CFBundleURLName: com.opendeck.app
             CFBundleURLSchemes:
@@ -29,5 +30,6 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.opendeck.app
+        CODE_SIGN_ENTITLEMENTS: OpenDeck/OpenDeck.entitlements
         SWIFT_VERSION: '5.10'
         TARGETED_DEVICE_FAMILY: '1,2'

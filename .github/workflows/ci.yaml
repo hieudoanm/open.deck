@@ -297,6 +297,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7.0.1
 
+      # Pin .NET 8: the windows-latest image's .NET 11 SDK lacks the
+      # Microsoft.Build.Packaging.Pri.Tasks.dll that WinUI 3's MrtCore
+      # targets require.
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
       - name: Build WinUI 3 app
         run: dotnet build desktop/windows/OpenDeckWinUI/OpenDeckWinUI.csproj -c Release -p:Platform=x64 --nologo
 

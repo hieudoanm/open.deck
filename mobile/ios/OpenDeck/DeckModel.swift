@@ -11,6 +11,16 @@ final class DeckModel: ObservableObject {
     @Published var frame: UIImage?
     @Published var hello: HelloInfo?
 
+    // NFC tool state (parity with Android's DeckViewModel)
+    @Published var showNfc = false
+    @Published var nfcInfo: TagInfo?
+    @Published var nfcMessage: String?
+    @Published var nfcBusy = false
+    @Published var writeAsUri = true
+    @Published var writeValue = ""
+
+    let nfcService = NfcService()
+
     private let client = DeckClient()
 
     init() {
@@ -53,6 +63,75 @@ final class DeckModel: ObservableObject {
         if let p = param("port"), !p.isEmpty { port = p }
         if let t = param("token"), !t.isEmpty { token = t }
         status = "Pairing details filled — tap Connect"
+    }
+
+    // MARK: - NFC tools
+
+    /// First `opendeck://connect` URI record on the tag, if any — the same
+    /// payload the desktop QR encodes (parity with Android's connectUri).
+    private static func connectURI(in info: TagInfo) -> String? {
+        for record in info.ndefRecords {
+            if case let .uri(uri) = record, uri.hasPrefix("opendeck://connect") {
+                return uri
+            }
+        }
+        return nil
+    }
+
+    func openNfc() {
+        if nfcMessage == nil {
+            nfcMessage = "Tap Scan, then hold your iPhone near a tag"
+        }
+        showNfc = true
+    }
+
+    func closeNfc() {
+        showNfc = false
+        nfcInfo = nil
+        nfcMessage = nil
+    }
+
+    /// User-initiated read scan (iOS has no ambient tag dispatch).
+    func scanNfc() async {
+        guard !nfcBusy else { return }
+        nfcBusy = true
+        nfcMessage = "Scanning…"
+        do {
+            let info = try await nfcService.readTag()
+            nfcBusy = false
+            if let uri = Self.connectURI(in: info), let url = URL(string: uri) {
+                handleOpenURL(url)
+                showNfc = false
+                nfcMessage = "Pairing details filled — tap Connect"
+            } else {
+                nfcInfo = info
+                nfcMessage = nil
+            }
+        } catch {
+            nfcBusy = false
+            nfcMessage = (error as? NfcError) == .cancelled ? nil : error.localizedDescription
+        }
+    }
+
+    /// Write the composed URI/text record, then present the write session.
+    func writeNfc() async {
+        let value = writeValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty else {
+            nfcMessage = "Enter a value first"
+            return
+        }
+        let record: NdefRecord = writeAsUri ? .uri(value) : .text(value, languageCode: "en")
+        nfcBusy = true
+        nfcMessage = "Writing…"
+        do {
+            try await nfcService.writeTag([record])
+            nfcBusy = false
+            nfcMessage = "Wrote '\(value)' to tag"
+            writeValue = ""
+        } catch {
+            nfcBusy = false
+            nfcMessage = (error as? NfcError) == .cancelled ? nil : error.localizedDescription
+        }
     }
 
     func disconnect() {

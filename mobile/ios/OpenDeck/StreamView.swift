@@ -62,6 +62,8 @@ struct StreamView: View {
                             .font(.caption)
                             .foregroundStyle(.white)
                         Spacer()
+                        Button("NFC") { model.openNfc() }
+                            .font(.caption)
                         Button("Disconnect") { model.disconnect() }
                             .font(.caption)
                     }

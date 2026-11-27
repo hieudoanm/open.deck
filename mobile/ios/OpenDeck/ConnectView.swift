@@ -33,8 +33,23 @@ struct ConnectView: View {
             .buttonStyle(.borderedProminent)
             .disabled(model.status == "Connecting…")
 
+            // NFC tools entry (parity with Android's ConnectScreen)
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("NFC tools")
+                    Text("Read / write tags & pairing")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("Open") { model.openNfc() }
+            }
+
             Text(model.status)
                 .font(.footnote)
+                .foregroundStyle(.secondary)
+            Text("Tip: scan the desktop QR or tap an NFC tag")
+                .font(.caption2)
                 .foregroundStyle(.secondary)
             Spacer()
         }

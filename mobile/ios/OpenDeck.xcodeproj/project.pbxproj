@@ -7,20 +7,33 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0B63998FA84DFE2A7D921B1C /* NdefRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7993B9BCD7144E53989A0670 /* NdefRecord.swift */; };
+		232ADE5535ADD6897F9674A1 /* NdefCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD47397DB618F39DD183D3B3 /* NdefCodec.swift */; };
 		3D2CE5D98FE99C6E6BF66242 /* OpenDeckApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827F6D7A6B79BE150B73D89D /* OpenDeckApp.swift */; };
 		405AAD69C301E4990144E3C6 /* ConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF690220B94E1BEABB52FDE2 /* ConnectView.swift */; };
+		4186AE318A62ECDEC39B8376 /* NfcService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D88CD2BB3A5DA58FF6B0817 /* NfcService.swift */; };
 		610DAE39418A42EEFDFE24E8 /* DeckModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7273439DA5731A90426FC837 /* DeckModel.swift */; };
+		8E7E23060659977B32C3F8B0 /* NdefPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42129EB865E6CD4FCE95DD21 /* NdefPayload.swift */; };
 		94E409AF9316DFD7E4067A27 /* StreamView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F84C30DC02BDDE1E3082C09 /* StreamView.swift */; };
+		D8EB9B4DFDD9EEC9356B58CF /* TagInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE70EC9BB30FB61D7A246E7 /* TagInfo.swift */; };
 		E92F66CC79AE4735C311E366 /* DeckClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 003E86F76FFE5F34E8266046 /* DeckClient.swift */; };
+		EE2BD0FBDD41DBDA3BD0F3CD /* NfcView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 177E0D88B07D1461398126F9 /* NfcView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		003E86F76FFE5F34E8266046 /* DeckClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckClient.swift; sourceTree = "<group>"; };
+		177E0D88B07D1461398126F9 /* NfcView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NfcView.swift; sourceTree = "<group>"; };
+		2DE70EC9BB30FB61D7A246E7 /* TagInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagInfo.swift; sourceTree = "<group>"; };
+		42129EB865E6CD4FCE95DD21 /* NdefPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NdefPayload.swift; sourceTree = "<group>"; };
 		6F4A7076B8B6D7FD83C855B0 /* OpenDeck.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = OpenDeck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7273439DA5731A90426FC837 /* DeckModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckModel.swift; sourceTree = "<group>"; };
+		7993B9BCD7144E53989A0670 /* NdefRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NdefRecord.swift; sourceTree = "<group>"; };
 		827F6D7A6B79BE150B73D89D /* OpenDeckApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenDeckApp.swift; sourceTree = "<group>"; };
+		8D88CD2BB3A5DA58FF6B0817 /* NfcService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NfcService.swift; sourceTree = "<group>"; };
 		8F84C30DC02BDDE1E3082C09 /* StreamView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamView.swift; sourceTree = "<group>"; };
+		9B7C3251379818A5FAB03BB2 /* OpenDeck.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenDeck.entitlements; sourceTree = "<group>"; };
 		A59C47DF857667A27D1AF400 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DD47397DB618F39DD183D3B3 /* NdefCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NdefCodec.swift; sourceTree = "<group>"; };
 		FF690220B94E1BEABB52FDE2 /* ConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -40,10 +53,25 @@
 				003E86F76FFE5F34E8266046 /* DeckClient.swift */,
 				7273439DA5731A90426FC837 /* DeckModel.swift */,
 				A59C47DF857667A27D1AF400 /* Info.plist */,
+				9B7C3251379818A5FAB03BB2 /* OpenDeck.entitlements */,
 				827F6D7A6B79BE150B73D89D /* OpenDeckApp.swift */,
 				8F84C30DC02BDDE1E3082C09 /* StreamView.swift */,
+				534E0A45225B8D0D82E42502 /* NFC */,
 			);
 			path = OpenDeck;
+			sourceTree = "<group>";
+		};
+		534E0A45225B8D0D82E42502 /* NFC */ = {
+			isa = PBXGroup;
+			children = (
+				DD47397DB618F39DD183D3B3 /* NdefCodec.swift */,
+				42129EB865E6CD4FCE95DD21 /* NdefPayload.swift */,
+				7993B9BCD7144E53989A0670 /* NdefRecord.swift */,
+				8D88CD2BB3A5DA58FF6B0817 /* NfcService.swift */,
+				177E0D88B07D1461398126F9 /* NfcView.swift */,
+				2DE70EC9BB30FB61D7A246E7 /* TagInfo.swift */,
+			);
+			path = NFC;
 			sourceTree = "<group>";
 		};
 		7B4F74FB0C1BBBF422FC8AEA = {
@@ -112,8 +140,14 @@
 				405AAD69C301E4990144E3C6 /* ConnectView.swift in Sources */,
 				E92F66CC79AE4735C311E366 /* DeckClient.swift in Sources */,
 				610DAE39418A42EEFDFE24E8 /* DeckModel.swift in Sources */,
+				232ADE5535ADD6897F9674A1 /* NdefCodec.swift in Sources */,
+				8E7E23060659977B32C3F8B0 /* NdefPayload.swift in Sources */,
+				0B63998FA84DFE2A7D921B1C /* NdefRecord.swift in Sources */,
+				4186AE318A62ECDEC39B8376 /* NfcService.swift in Sources */,
+				EE2BD0FBDD41DBDA3BD0F3CD /* NfcView.swift in Sources */,
 				3D2CE5D98FE99C6E6BF66242 /* OpenDeckApp.swift in Sources */,
 				94E409AF9316DFD7E4067A27 /* StreamView.swift in Sources */,
+				D8EB9B4DFDD9EEC9356B58CF /* TagInfo.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,6 +158,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = OpenDeck/OpenDeck.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = OpenDeck/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
@@ -204,6 +239,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = OpenDeck/OpenDeck.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				INFOPLIST_FILE = OpenDeck/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;

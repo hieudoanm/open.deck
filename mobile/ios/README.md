@@ -34,9 +34,32 @@ Bundle id: `com.opendeck.app`, deployment target iOS 16.0, all orientations.
 1. Run `open-deck-server` on your PC.
 2. Open OpenDeck, enter the PC's LAN address, port (`47821`) and pairing token
    — or scan the pairing QR shown by a desktop companion app. The QR is an
-   `opendeck://connect?host=…&port=…&token=…` deep link that fills the form.
+   `opendeck://connect?host=…&port=…&token=…` deep link that fills the form —
+   or use the NFC tools to read/write tags; a tag holding the pairing URI
+   fills the form automatically.
 3. Tap **Connect** — the desktop streams in; drag on the image to move/click
    the mouse, use the bottom bar for ESC/TAB/↵/⌫/arrows.
+
+## NFC tools
+
+**NFC tools** is on the connect screen and in the stream top bar. **Scan**
+presents the system tag-reader UI and shows the tag's technologies and
+decoded NDEF records (URI/text/MIME/AAR/unknown); **Write** puts a URI or
+text record on a writable tag. Requires `NFCReaderUsageDescription` +
+`OpenDeck.entitlements` (`com.apple.developer.nfc.readersession.formats`).
+NFC is iPhone-only — iPads and the simulator show an unavailable state.
+
+## Parity with Android
+
+Feature parity is a goal — keep `mobile/android` and this app in sync.
+Known platform differences:
+
+- NFC scans are user-initiated sessions on iOS (no ambient dispatch);
+  Android uses foreground dispatch.
+- **Session focus mode is Android-only** — iOS has no AccessibilityService
+  equivalent, so there is no "stay in app" enforcement.
+- Auto-disconnect on exit is implemented on both (`scenePhase` background
+  here, `onStop` on Android).
 
 ## Layout
 
@@ -46,12 +69,17 @@ Bundle id: `com.opendeck.app`, deployment target iOS 16.0, all orientations.
 - `OpenDeck/DeckModel.swift` — `@MainActor ObservableObject` holding the
   connect form, connection status, latest frame and `HelloInfo`; also parses
   `opendeck://connect` deep links (`handleOpenURL`) to pre-fill the form.
-- `OpenDeck/ConnectView.swift` — pairing form.
+- `OpenDeck/ConnectView.swift` — pairing form plus the NFC-tools entry.
+- `OpenDeck/NFC/` — NFC toolkit (parity with Android's `Nfc.kt`):
+  `NdefCodec` (pure NDEF parse/serialize), `NdefPayload`/`NdefRecord`/
+  `TagInfo` models, `NfcService` (`NFCTagReaderSession` read/write),
+  `NfcView` (scan/write UI).
 - `OpenDeck/StreamView.swift` — stream display with letterbox-aware
   touch→desktop coordinate mapping (`mapToDesktop`), `DragGesture` mouse
   control, top status bar, bottom control cluster.
 - `OpenDeck/OpenDeckApp.swift` — `@main` entry; switches between
-  `ConnectView` and `StreamView` on `model.connected`.
+  `ConnectView`/`NfcView`/`StreamView`; disconnects the session when the
+  app goes to `.background` (auto-disconnect parity with Android).
 
 ## Notes
 
