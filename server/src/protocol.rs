@@ -33,13 +33,31 @@ pub enum ServerMessage {
         /// Bytes/sec, computed server-side from counter deltas.
         net_rx_rate: u64,
         net_tx_rate: u64,
+        /// Per-interface byte rates (loopback included; clients filter).
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        net_interfaces: Vec<NetInterface>,
         uptime_secs: u64,
         #[serde(skip_serializing_if = "Option::is_none")]
         battery_percent: Option<f32>,
+        /// "charging" | "discharging" | "full" | "ac" | "battery" | "unknown"
+        #[serde(skip_serializing_if = "Option::is_none")]
+        battery_state: Option<String>,
+        /// Memory pressure 0-100 (higher = more pressure). macOS:
+        /// 100 - kern.memorystatus_level; Linux: /proc/pressure/memory avg10.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        memory_pressure: Option<f32>,
     },
     Error {
         message: String,
     },
+}
+
+/// Per-network-interface throughput sample inside `Stats`.
+#[derive(Debug, Clone, Serialize)]
+pub struct NetInterface {
+    pub name: String,
+    pub rx_rate: u64,
+    pub tx_rate: u64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]

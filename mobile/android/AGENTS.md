@@ -48,14 +48,18 @@ Requires JDK 17+ and the Android SDK (`compileSdk = 35`, `minSdk = 26`).
 - `SystemMonitor.kt`, `SystemScreen.kt` — phone-local stats (memory/CPU/
   battery/disk/network via `/proc`, `ActivityManager`, `BatteryManager`)
   plus desktop stats cards rendered from `desktopStats` behind a
-  Phone/Desktop toggle (parity with iOS `System/`).
+  Phone/Desktop toggle — including host battery, memory pressure, and
+  per-interface net rates (parity with iOS `System/`).
 - `IPScreen.kt`, `IPService.kt` — IP info page (local interfaces + public IP
   lookup); parity with iOS `IP/`.
 - `HostApi.kt`, `PortsScreen.kt`, `AppsScreen.kt` — host-introspection pages
-  hitting the server's `GET /ports` (5s poll) and `GET /apps` (2s poll);
-  parity with iOS `Host/` and omni's Ports/Apps views.
-- `ClipboardScreen.kt` — clipboard history viewer (`ClipboardManager`);
-  parity with iOS `Clipboard/`.
+  hitting the server's `GET /ports` (5s poll), `POST /ports/kill`
+  (Kill/Force-kill dialog), `GET /apps` (2s poll), and token-gated
+  `/clipboard` endpoints; parity with iOS `Host/` and omni's Ports/Apps
+  views. `HostApi` takes the pairing `token` as a third arg.
+- `ClipboardScreen.kt` — clipboard history viewer (`ClipboardManager`)
+  with a Phone/Desktop toggle; desktop mode polls `GET /clipboard` and
+  writes back via `POST /clipboard`; parity with iOS `Clipboard/`.
 - `Nfc.kt` — NFC toolkit (ported from omni, no DI): `NfcTags.inspect/write`
   for NDEF read/write with URI/text/MIME record decoding (record strings
   are prefixed `URI: `/`Text: ` — strip `URI: ` before scheme checks),

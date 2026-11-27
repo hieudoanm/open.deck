@@ -51,7 +51,7 @@ struct DeckPagerView: View {
             IPView().tag(DeckPage.ip)
             PortsView(model: model).tag(DeckPage.ports)
             AppsView(model: model).tag(DeckPage.apps)
-            ClipboardView().tag(DeckPage.clipboard)
+            ClipboardView(model: model).tag(DeckPage.clipboard)
             NfcView(model: model).tag(DeckPage.nfc)
         }
         .tabViewStyle(.page(indexDisplayMode: .never))

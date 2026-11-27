@@ -54,12 +54,14 @@ xcodebuild -project OpenDeck.xcodeproj -scheme OpenDeck \
 - `OpenDeck/IP/` — IP info page (local IPs, public IP lookup, network
   interfaces): `IPModels`, `IPViewModel`, `IPView`.
 - `OpenDeck/Host/` — host-introspection pages fed by server HTTP endpoints:
-  `HostModels.swift` (`PortEntry`/`AppEntry` + `HostAPI` built from the
-  connect form's host/port), `PortsView.swift` (`GET /ports`, 5s poll,
-  search), `AppsView.swift` (`GET /apps`, 2s poll, search) — ports of omni's
-  Ports/Apps views.
-- `OpenDeck/Clipboard/` — `UIPasteboard` history viewer: `ClipboardStore`,
-  `ClipboardView`.
+  `HostModels.swift` (`PortEntry`/`AppEntry`/`ClipboardEntry` + `HostAPI`
+  built from the connect form's host/port + pairing `token`),
+  `PortsView.swift` (`GET /ports` 5s poll, search, swipe-to-kill →
+  `POST /ports/kill` with SIGTERM/SIGKILL confirm), `AppsView.swift`
+  (`GET /apps`, 2s poll, search) — ports of omni's Ports/Apps views.
+- `OpenDeck/Clipboard/` — `UIPasteboard` history viewer with a
+  Phone/Desktop toggle: desktop mode polls `GET /clipboard` and writes
+  back via `POST /clipboard` (`ClipboardStore`, `ClipboardView`).
 - `OpenDeck/NFC/` — NFC toolkit, parity with omni's `packages/mobile/ios`:
   `NdefCodec.swift` (pure NDEF parse/serialize — URI prefix table, text
   status byte, Smart Poster), `NdefPayload`/`NdefRecord`/`TagInfo` models,

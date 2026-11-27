@@ -145,7 +145,7 @@ fun DeckPager(vm: DeckViewModel) {
                 DeckPage.IP -> IPScreen()
                 DeckPage.PORTS -> PortsScreen(vm)
                 DeckPage.APPS -> AppsScreen(vm)
-                DeckPage.CLIPBOARD -> ClipboardScreen()
+                DeckPage.CLIPBOARD -> ClipboardScreen(vm)
                 DeckPage.NFC -> NfcScreen(vm)
             }
         }

@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 private val Accent = Color(0xFF3B82F6)
 private val SurfaceCard = Color(0xFF1C1F24)
@@ -25,12 +26,15 @@ fun PortsScreen(vm: DeckViewModel) {
     var ports by remember { mutableStateOf<List<PortEntry>>(emptyList()) }
     var query by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
+    var killTarget by remember { mutableStateOf<PortEntry?>(null) }
+    var killError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(vm.connState) {
         while (isActive) {
             if (vm.connState == ConnState.CONNECTED && vm.host.isNotBlank()) {
                 try {
-                    ports = HostApi(vm.host, vm.port).ports()
+                    ports = HostApi(vm.host, vm.port, vm.token).ports()
                     error = null
                 } catch (_: Exception) {
                     error = "Unable to read ports"
@@ -65,14 +69,66 @@ fun PortsScreen(vm: DeckViewModel) {
                 if (ports.isEmpty()) "No listening ports found" else "No matches",
             )
             else -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                filtered.forEach { PortRow(it) }
+                filtered.forEach { PortRow(it) { killTarget = it } }
             }
         }
+    }
+
+    killTarget?.let { target ->
+        AlertDialog(
+            onDismissRequest = { killTarget = null },
+            title = {
+                Text("Kill ${target.process.ifEmpty { "pid ${target.pid}" }}?")
+            },
+            text = { Text("The process owning port ${target.port} will be terminated.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    val t = killTarget
+                    killTarget = null
+                    if (t != null) {
+                        scope.launch {
+                            try {
+                                HostApi(vm.host, vm.port, vm.token).killPort(t.pid)
+                            } catch (e: Exception) {
+                                killError = e.message
+                            }
+                        }
+                    }
+                }) { Text("Kill", color = Color.Red) }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        val t = killTarget
+                        killTarget = null
+                        if (t != null) {
+                            scope.launch {
+                                try {
+                                    HostApi(vm.host, vm.port, vm.token).killPort(t.pid, force = true)
+                                } catch (e: Exception) {
+                                    killError = e.message
+                                }
+                            }
+                        }
+                    }) { Text("Force kill", color = Color.Red) }
+                    TextButton(onClick = { killTarget = null }) { Text("Cancel") }
+                }
+            },
+        )
+    }
+
+    killError?.let { msg ->
+        AlertDialog(
+            onDismissRequest = { killError = null },
+            title = { Text("Kill failed") },
+            text = { Text(msg) },
+            confirmButton = { TextButton(onClick = { killError = null }) { Text("OK") } },
+        )
     }
 }
 
 @Composable
-private fun PortRow(p: PortEntry) {
+private fun PortRow(p: PortEntry, onKill: () -> Unit) {
     Surface(color = SurfaceCard, shape = MaterialTheme.shapes.medium) {
         Row(
             Modifier.fillMaxWidth().padding(12.dp),
@@ -104,6 +160,11 @@ private fun PortRow(p: PortEntry) {
                 )
             }
             Text("pid ${p.pid}", fontSize = 10.sp, fontFamily = FontFamily.Monospace, color = Faint)
+            if (p.pid > 0) {
+                TextButton(onClick = onKill) {
+                    Text("Kill", fontSize = 11.sp, color = Color.Red)
+                }
+            }
         }
     }
 }

@@ -20,8 +20,10 @@ pairing token, WebSocket URL, path, and monitor size — desktop companion apps
 parse it, so keep the format stable.
 
 HTTP endpoints: `GET /health`, `GET /status` (JSON client count + desktop/stream
-info), `GET /ports` + `GET /apps` (host introspection — listening sockets via
-`lsof`/`netstat`, processes via `sysinfo`; both spawn-blocking), and
+info), `GET /ports` + `POST /ports/kill` (SIGTERM/SIGKILL, token-required) +
+`GET /apps` (host introspection — listening sockets via `lsof`/`netstat`,
+processes via `sysinfo`; both spawn-blocking), `GET|POST|DELETE /clipboard`
+(desktop clipboard history + write-back, token-required), and
 `GET /ws?token=…` for the WebSocket upgrade.
 
 ## Structure
@@ -38,6 +40,13 @@ info), `GET /ports` + `GET /apps` (host introspection — listening sockets via
   the process list (cpu/mem). Blocking — handlers use `spawn_blocking`.
 - `src/input.rs` — dedicated OS input thread (`enigo`) consuming
   `ClientMessage`s for mouse, scroll, key, and text injection.
+- `src/stats.rs` — 2s `sysinfo` sampler → `ServerMessage::Stats` broadcast;
+  battery (`pmset`/sysfs), memory pressure (`kern.memorystatus_level`/
+  `/proc/pressure/memory`), and per-interface net rates are platform probes.
+- `src/hostinfo.rs` — `GET /ports` (lsof/netstat) + `GET /apps` (sysinfo) +
+  `kill_process` (omni `SignalProcessTerminator` parity).
+- `src/clipboard.rs` — 2s clipboard poller (`pbpaste`/`xclip`/`powershell`)
+  - in-memory history (cap 100) behind token-gated `/clipboard` routes.
 - `src/protocol.rs` — serde wire types shared with every client. Normative spec:
   `docs/PROTOCOL.md` at repo root — update both together.
 

@@ -26,6 +26,13 @@ data class HelloInfo(
     val streamHeight: Int,
 )
 
+/** Per-interface throughput inside `DesktopStats.netInterfaces`. */
+data class NetInterfaceStat(
+    val name: String,
+    val rxRate: Long,
+    val txRate: Long,
+)
+
 /** Host stats pushed by the server every ~2s (`{"type":"stats",...}`). */
 data class DesktopStats(
     val cpuPercent: Double,
@@ -37,8 +44,11 @@ data class DesktopStats(
     val diskTotal: Long,
     val netRxRate: Long,
     val netTxRate: Long,
+    val netInterfaces: List<NetInterfaceStat>,
     val uptimeSecs: Long,
     val batteryPercent: Double?,
+    val batteryState: String?,
+    val memoryPressure: Double?,
 )
 
 class DeckClient(
@@ -86,7 +96,18 @@ class DeckClient(
                                 streamHeight = o.optInt("stream_height"),
                             )
                         )
-                        "stats" -> onStats(
+                        "stats" -> {
+                            val ifaces = o.optJSONArray("net_interfaces")?.let { arr ->
+                                (0 until arr.length()).map { i ->
+                                    val it = arr.getJSONObject(i)
+                                    NetInterfaceStat(
+                                        name = it.optString("name"),
+                                        rxRate = it.optLong("rx_rate"),
+                                        txRate = it.optLong("tx_rate"),
+                                    )
+                                }
+                            } ?: emptyList()
+                            onStats(
                             DesktopStats(
                                 cpuPercent = o.optDouble("cpu_percent"),
                                 memUsed = o.optLong("mem_used"),
@@ -97,10 +118,14 @@ class DeckClient(
                                 diskTotal = o.optLong("disk_total"),
                                 netRxRate = o.optLong("net_rx_rate"),
                                 netTxRate = o.optLong("net_tx_rate"),
+                                netInterfaces = ifaces,
                                 uptimeSecs = o.optLong("uptime_secs"),
                                 batteryPercent = if (o.has("battery_percent") && !o.isNull("battery_percent")) o.optDouble("battery_percent") else null,
+                                batteryState = if (o.has("battery_state") && !o.isNull("battery_state")) o.optString("battery_state") else null,
+                                memoryPressure = if (o.has("memory_pressure") && !o.isNull("memory_pressure")) o.optDouble("memory_pressure") else null,
                             )
-                        )
+                            )
+                        }
                         "pong" -> {}
                         "error" -> onState(ConnState.CONNECTED, o.optString("message"))
                     }

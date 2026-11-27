@@ -3,6 +3,7 @@
 
 mod actions;
 mod capture;
+mod clipboard;
 mod hostinfo;
 mod input;
 mod protocol;
@@ -111,6 +112,7 @@ struct AppState {
     next_id: AtomicU64,
     actions: Arc<ActionEngine>,
     stats: broadcast::Sender<ServerMessage>,
+    clipboard: clipboard::SharedClipboard,
 }
 
 #[derive(serde::Serialize)]
@@ -124,6 +126,13 @@ struct Status {
 #[derive(Deserialize)]
 struct RunActionRequest {
     name: String,
+}
+
+#[derive(Deserialize)]
+struct KillRequest {
+    pid: u32,
+    #[serde(default)]
+    force: bool,
 }
 
 #[tokio::main]
@@ -152,6 +161,8 @@ async fn main() -> Result<()> {
     let actions = Arc::new(ActionEngine::load(args.actions.as_deref())?);
     info!(count = actions.list().len(), "actions loaded");
     let stats_tx = stats::spawn_stats();
+    let clipboard_state = clipboard::new_state();
+    clipboard::spawn_poller(clipboard_state.clone());
 
     let state = Arc::new(AppState {
         token: token.clone(),
@@ -164,6 +175,7 @@ async fn main() -> Result<()> {
         next_id: AtomicU64::new(1),
         actions,
         stats: stats_tx,
+        clipboard: clipboard_state,
     });
 
     let app = Router::new()
@@ -174,7 +186,11 @@ async fn main() -> Result<()> {
         .route("/actions", get(actions_list_handler))
         .route("/actions/run", post(actions_run_handler))
         .route("/ports", get(ports_handler))
+        .route("/ports/kill", post(ports_kill_handler))
         .route("/apps", get(apps_handler))
+        .route("/clipboard", get(clipboard_get_handler))
+        .route("/clipboard", post(clipboard_write_handler))
+        .route("/clipboard", axum::routing::delete(clipboard_clear_handler))
         .route("/ws", get(ws_handler))
         .layer(CorsLayer::permissive())
         .with_state(state);
@@ -273,6 +289,81 @@ async fn apps_handler() -> Json<Vec<hostinfo::AppEntry>> {
         .await
         .unwrap_or_default();
     Json(apps)
+}
+
+/// Kill is destructive — require the pairing token (same pattern as
+/// `/actions/run`).
+async fn ports_kill_handler(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<HashMap<String, String>>,
+    Json(req): Json<KillRequest>,
+) -> Response {
+    let provided = params.get("token").cloned().unwrap_or_default();
+    if provided != state.token {
+        return (StatusCode::UNAUTHORIZED, "invalid pairing token").into_response();
+    }
+    match tokio::task::spawn_blocking(move || hostinfo::kill_process(req.pid, req.force)).await {
+        Ok(Ok(())) => (StatusCode::OK, "terminated").into_response(),
+        Ok(Err(e)) => (StatusCode::BAD_REQUEST, e).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+    }
+}
+
+/// Clipboard contents are sensitive — token required on all three verbs.
+fn clipboard_token_ok(state: &AppState, params: &HashMap<String, String>) -> bool {
+    params.get("token").map(String::as_str) == Some(state.token.as_str())
+}
+
+async fn clipboard_get_handler(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<HashMap<String, String>>,
+) -> Response {
+    if !clipboard_token_ok(&state, &params) {
+        return (StatusCode::UNAUTHORIZED, "invalid pairing token").into_response();
+    }
+    let items = state
+        .clipboard
+        .lock()
+        .map(|g| g.snapshot())
+        .unwrap_or_default();
+    Json(items).into_response()
+}
+
+async fn clipboard_write_handler(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<HashMap<String, String>>,
+    Json(req): Json<clipboard::ClipboardWrite>,
+) -> Response {
+    if !clipboard_token_ok(&state, &params) {
+        return (StatusCode::UNAUTHORIZED, "invalid pairing token").into_response();
+    }
+    let write_text = req.content.clone();
+    let record_text = req.content.clone();
+    match tokio::task::spawn_blocking(move || clipboard::write_clipboard_text_pub(&write_text))
+        .await
+    {
+        Ok(Ok(())) => {
+            if let Ok(mut guard) = state.clipboard.lock() {
+                guard.record(record_text);
+            }
+            (StatusCode::OK, "copied").into_response()
+        }
+        Ok(Err(e)) => (StatusCode::BAD_REQUEST, e).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+    }
+}
+
+async fn clipboard_clear_handler(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<HashMap<String, String>>,
+) -> Response {
+    if !clipboard_token_ok(&state, &params) {
+        return (StatusCode::UNAUTHORIZED, "invalid pairing token").into_response();
+    }
+    if let Ok(mut guard) = state.clipboard.lock() {
+        guard.clear();
+    }
+    (StatusCode::OK, "cleared").into_response()
 }
 
 async fn ws_handler(

@@ -8,6 +8,13 @@ struct HelloInfo {
     var streamHeight: Int
 }
 
+/// Per-interface throughput inside `DesktopStats.netInterfaces`.
+struct NetInterfaceStat {
+    var name: String
+    var rxRate: UInt64
+    var txRate: UInt64
+}
+
 /// Host stats pushed by the server every ~2s (`{"type":"stats",...}`).
 struct DesktopStats {
     var cpuPercent: Double
@@ -19,8 +26,11 @@ struct DesktopStats {
     var diskTotal: UInt64
     var netRxRate: UInt64
     var netTxRate: UInt64
+    var netInterfaces: [NetInterfaceStat]
     var uptimeSecs: UInt64
     var batteryPercent: Double?
+    var batteryState: String?
+    var memoryPressure: Double?
 }
 
 /// Thin wrapper around URLSessionWebSocketTask speaking the OpenDeck
@@ -98,6 +108,13 @@ final class DeckClient {
             DispatchQueue.main.async { self.onHello?(hello) }
             DispatchQueue.main.async { self.onState?(true, "Connected") }
         case "stats":
+            let interfaces = (obj["net_interfaces"] as? [[String: Any]] ?? []).map { i in
+                NetInterfaceStat(
+                    name: i["name"] as? String ?? "",
+                    rxRate: uint64(i["rx_rate"]),
+                    txRate: uint64(i["tx_rate"])
+                )
+            }
             let stats = DesktopStats(
                 cpuPercent: obj["cpu_percent"] as? Double ?? 0,
                 memUsed: uint64(obj["mem_used"]),
@@ -108,8 +125,11 @@ final class DeckClient {
                 diskTotal: uint64(obj["disk_total"]),
                 netRxRate: uint64(obj["net_rx_rate"]),
                 netTxRate: uint64(obj["net_tx_rate"]),
+                netInterfaces: interfaces,
                 uptimeSecs: uint64(obj["uptime_secs"]),
-                batteryPercent: obj["battery_percent"] as? Double
+                batteryPercent: obj["battery_percent"] as? Double,
+                batteryState: obj["battery_state"] as? String,
+                memoryPressure: obj["memory_pressure"] as? Double
             )
             DispatchQueue.main.async { self.onStats?(stats) }
         case "pong":

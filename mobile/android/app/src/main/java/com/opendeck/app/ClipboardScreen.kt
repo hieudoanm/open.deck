@@ -129,16 +129,37 @@ class ClipboardMonitor(private val context: Context) {
 }
 
 @Composable
-fun ClipboardScreen() {
+fun ClipboardScreen(vm: DeckViewModel) {
     val context = LocalContext.current
     val monitor = remember { ClipboardMonitor(context) }
     var query by remember { mutableStateOf("") }
     var confirmClear by remember { mutableStateOf(false) }
+    var confirmDesktopClear by remember { mutableStateOf(false) }
+    var showDesktop by remember { mutableStateOf(false) }
+    var desktopItems by remember { mutableStateOf<List<ClipboardEntry>>(emptyList()) }
+    var desktopError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+
+    val useDesktop = showDesktop && vm.connState == ConnState.CONNECTED && vm.token.isNotEmpty()
 
     LaunchedEffect(Unit) {
         while (isActive) {
             monitor.poll()
             delay(1500)
+        }
+    }
+
+    LaunchedEffect(useDesktop) {
+        while (isActive) {
+            if (useDesktop) {
+                try {
+                    desktopItems = HostApi(vm.host, vm.port, vm.token).clipboard()
+                    desktopError = null
+                } catch (_: Exception) {
+                    desktopError = "Unable to read desktop clipboard"
+                }
+            }
+            delay(3000)
         }
     }
 
@@ -153,55 +174,36 @@ fun ClipboardScreen() {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text("Clipboard", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.weight(1f))
-            if (monitor.items.isNotEmpty()) {
+            if (vm.connState == ConnState.CONNECTED) {
+                FilterChip(
+                    selected = showDesktop,
+                    onClick = { showDesktop = !showDesktop },
+                    label = { Text(if (showDesktop) "Desktop" else "Phone") },
+                )
+            }
+            if (useDesktop) {
+                if (desktopItems.isNotEmpty()) {
+                    TextButton(onClick = { confirmDesktopClear = true }) { Text("Clear", color = Muted) }
+                }
+            } else if (monitor.items.isNotEmpty()) {
                 TextButton(onClick = { confirmClear = true }) { Text("Clear", color = Muted) }
             }
         }
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = query,
-            onValueChange = { query = it },
-            placeholder = { Text("Search history…") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(8.dp))
 
-        if (filtered.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(
-                    if (query.isEmpty()) "Copy something — it will appear here." else "No matches",
-                    color = Muted, fontSize = 13.sp,
-                )
-            }
-        } else {
-            LazyColumn(Modifier.weight(1f)) {
-                items(filtered, key = { it.id }) { item ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable { monitor.copy(item) }
-                            .padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.Top,
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(item.content, fontSize = 14.sp, maxLines = 3)
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (item.pinned) Text("📌", fontSize = 10.sp)
-                                Text(fmt.format(Date(item.createdAt)), fontSize = 10.sp, color = Faint)
-                                if (item.copiedCount > 1) Text("×${item.copiedCount}", fontSize = 10.sp, color = Faint)
-                            }
-                        }
-                        TextButton(onClick = { monitor.togglePin(item) }) {
-                            Text(if (item.pinned) "Unpin" else "Pin", fontSize = 11.sp)
-                        }
-                        TextButton(onClick = { monitor.delete(item) }) {
-                            Text("Delete", fontSize = 11.sp, color = Color.Red)
-                        }
+        if (useDesktop) {
+            DesktopClipboardList(
+                items = desktopItems,
+                error = desktopError,
+                onCopy = { item ->
+                    scope.launch {
+                        try { HostApi(vm.host, vm.port, vm.token).clipboardWrite(item.content) }
+                        catch (_: Exception) {}
                     }
-                    HorizontalDivider(color = Color(0xFF2A2F36))
-                }
-            }
+                },
+            )
+        } else {
+            PhoneClipboardContent(monitor, filtered, query, fmt, onQuery = { query = it })
         }
     }
 
@@ -216,5 +218,124 @@ fun ClipboardScreen() {
                 TextButton(onClick = { confirmClear = false }) { Text("Cancel") }
             },
         )
+    }
+
+    if (confirmDesktopClear) {
+        AlertDialog(
+            onDismissRequest = { confirmDesktopClear = false },
+            title = { Text("Clear desktop clipboard history?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDesktopClear = false
+                    scope.launch {
+                        try { HostApi(vm.host, vm.port, vm.token).clipboardClear() }
+                        catch (_: Exception) {}
+                        desktopItems = emptyList()
+                    }
+                }) { Text("Clear") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDesktopClear = false }) { Text("Cancel") }
+            },
+        )
+    }
+}
+
+/// Phone-local clipboard history (search + pin/delete).
+@Composable
+private fun PhoneClipboardContent(
+    monitor: ClipboardMonitor,
+    filtered: List<ClipItem>,
+    query: String,
+    fmt: SimpleDateFormat,
+    onQuery: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQuery,
+        placeholder = { Text("Search history…") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Spacer(Modifier.height(8.dp))
+
+    if (filtered.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                if (query.isEmpty()) "Copy something — it will appear here." else "No matches",
+                color = Muted, fontSize = 13.sp,
+            )
+        }
+    } else {
+        LazyColumn(Modifier.weight(1f)) {
+            items(filtered, key = { it.id }) { item ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { monitor.copy(item) }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(item.content, fontSize = 14.sp, maxLines = 3)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (item.pinned) Text("📌", fontSize = 10.sp)
+                            Text(fmt.format(Date(item.createdAt)), fontSize = 10.sp, color = Faint)
+                            if (item.copiedCount > 1) Text("×${item.copiedCount}", fontSize = 10.sp, color = Faint)
+                        }
+                    }
+                    TextButton(onClick = { monitor.togglePin(item) }) {
+                        Text(if (item.pinned) "Unpin" else "Pin", fontSize = 11.sp)
+                    }
+                    TextButton(onClick = { monitor.delete(item) }) {
+                        Text("Delete", fontSize = 11.sp, color = Color.Red)
+                    }
+                }
+                HorizontalDivider(color = Color(0xFF2A2F36))
+            }
+        }
+    }
+}
+
+/// Desktop clipboard history from `GET /clipboard`; tap writes back to the
+/// *desktop* clipboard via `POST /clipboard`.
+@Composable
+private fun DesktopClipboardList(
+    items: List<ClipboardEntry>,
+    error: String?,
+    onCopy: (ClipboardEntry) -> Unit,
+) {
+    if (items.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text(
+                error ?: "Copy something on the desktop — it will appear here.",
+                color = Muted, fontSize = 13.sp,
+            )
+        }
+    } else {
+        LazyColumn(Modifier.weight(1f)) {
+            items(items, key = { it.id }) { item ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { onCopy(item) }
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(item.content, fontSize = 14.sp, maxLines = 3)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                java.text.SimpleDateFormat("MMM dd HH:mm", Locale.US)
+                                    .format(Date(item.createdAt * 1000)),
+                                fontSize = 10.sp, color = Faint,
+                            )
+                            if (item.copiedCount > 1) Text("×${item.copiedCount}", fontSize = 10.sp, color = Faint)
+                        }
+                    }
+                }
+                HorizontalDivider(color = Color(0xFF2A2F36))
+            }
+        }
     }
 }

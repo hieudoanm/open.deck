@@ -161,6 +161,27 @@ struct SystemView: View {
                 .foregroundStyle(DeckTheme.muted)
         }
 
+        if let battery = s.batteryPercent {
+            DeckCard(title: "Battery") {
+                HStack(spacing: DeckTheme.Spacing.lg) {
+                    Image(systemName: desktopBatteryIcon(s))
+                        .font(.system(size: 30))
+                        .foregroundStyle(DeckTheme.accent)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(Int(battery.rounded()))%")
+                            .font(.system(.title3, design: .monospaced))
+                            .monospacedDigit()
+                        Text(s.batteryState ?? "unknown")
+                            .font(.caption)
+                            .foregroundStyle(DeckTheme.muted)
+                    }
+                    Spacer()
+                    ProgressView(value: max(0, min(1, battery / 100)))
+                        .tint(DeckTheme.accent)
+                }
+            }
+        }
+
         DeckCard(title: "Memory") {
             if s.memTotal > 0 {
                 meter(used: s.memUsed, total: s.memTotal)
@@ -169,6 +190,11 @@ struct SystemView: View {
                     .foregroundStyle(DeckTheme.muted)
             } else {
                 Text("Unavailable").foregroundStyle(DeckTheme.muted)
+            }
+            if let pressure = s.memoryPressure {
+                Text("Pressure \(Int(pressure.rounded()))%")
+                    .font(.caption2)
+                    .foregroundStyle(pressure > 70 ? Color.red : DeckTheme.faint)
             }
         }
 
@@ -193,15 +219,33 @@ struct SystemView: View {
         }
 
         DeckCard(title: "Network") {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Down").font(.caption2).foregroundStyle(DeckTheme.muted)
-                    Text(ByteFormatter.rate(Double(s.netRxRate))).font(.callout.monospaced())
+            VStack(alignment: .leading, spacing: DeckTheme.Spacing.sm) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Down").font(.caption2).foregroundStyle(DeckTheme.muted)
+                        Text(ByteFormatter.rate(Double(s.netRxRate))).font(.callout.monospaced())
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("Up").font(.caption2).foregroundStyle(DeckTheme.muted)
+                        Text(ByteFormatter.rate(Double(s.netTxRate))).font(.callout.monospaced())
+                    }
                 }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Up").font(.caption2).foregroundStyle(DeckTheme.muted)
-                    Text(ByteFormatter.rate(Double(s.netTxRate))).font(.callout.monospaced())
+                let active = s.netInterfaces.filter {
+                    $0.rxRate > 0 || $0.txRate > 0 || $0.name != "lo0"
+                }.prefix(6)
+                if !active.isEmpty {
+                    ForEach(Array(active), id: \.name) { iface in
+                        HStack {
+                            Text(iface.name)
+                                .font(.caption2.monospaced())
+                                .foregroundStyle(DeckTheme.faint)
+                            Spacer()
+                            Text("↓\(ByteFormatter.rate(Double(iface.rxRate))) ↑\(ByteFormatter.rate(Double(iface.txRate)))")
+                                .font(.caption2.monospaced())
+                                .foregroundStyle(DeckTheme.muted)
+                        }
+                    }
                 }
             }
         }
@@ -218,6 +262,18 @@ struct SystemView: View {
                     .foregroundStyle(DeckTheme.muted)
             }
         }
+    }
+
+    private func desktopBatteryIcon(_ s: DesktopStats) -> String {
+        guard let pct = s.batteryPercent else { return "battery.0" }
+        let bucket: String
+        switch pct {
+        case ..<25: bucket = "0"
+        case ..<50: bucket = "25"
+        case ..<75: bucket = "50"
+        default: bucket = "100"
+        }
+        return s.batteryState == "charging" ? "battery.\(bucket).bolt" : "battery.\(bucket)"
     }
 
     private func uptimeText(_ secs: UInt64) -> String {

@@ -149,11 +149,33 @@ private fun DesktopStatsCards(s: DesktopStats) {
             Meter(s.cpuPercent, 100.0)
             Text("${s.cpuPercent.toInt()}%", fontSize = 12.sp, fontFamily = FontFamily.Monospace, color = Muted)
         }
+        s.batteryPercent?.let { pct ->
+            StatCard("Battery") {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text("${pct.toInt()}%", fontSize = 20.sp, fontFamily = FontFamily.Monospace)
+                        Text(s.batteryState ?: "unknown", fontSize = 12.sp, color = Muted)
+                    }
+                    LinearProgressIndicator(
+                        progress = { (pct / 100).coerceIn(0.0, 1.0).toFloat() },
+                        modifier = Modifier.fillMaxWidth(0.4f),
+                        color = Accent,
+                    )
+                }
+            }
+        }
         StatCard("Memory") {
             if (s.memTotal > 0) {
                 Meter(s.memUsed.toDouble(), s.memTotal.toDouble())
                 Text("${ByteFormatter.humanReadable(s.memUsed)} / ${ByteFormatter.humanReadable(s.memTotal)}", fontSize = 12.sp, fontFamily = FontFamily.Monospace, color = Muted)
             } else Text("Unavailable", color = Muted)
+            s.memoryPressure?.let {
+                Text(
+                    "Pressure ${it.toInt()}%",
+                    fontSize = 11.sp,
+                    color = if (it > 70) Color.Red else Faint,
+                )
+            }
         }
         if (s.swapTotal > 0) {
             StatCard("Swap") {
@@ -168,22 +190,31 @@ private fun DesktopStatsCards(s: DesktopStats) {
             } else Text("Unavailable", color = Muted)
         }
         StatCard("Network") {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Column {
-                    Text("Down", fontSize = 10.sp, color = Muted)
-                    Text(ByteFormatter.rate(s.netRxRate.toDouble()), fontSize = 16.sp, fontFamily = FontFamily.Monospace)
+            Column {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column {
+                        Text("Down", fontSize = 10.sp, color = Muted)
+                        Text(ByteFormatter.rate(s.netRxRate.toDouble()), fontSize = 16.sp, fontFamily = FontFamily.Monospace)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("Up", fontSize = 10.sp, color = Muted)
+                        Text(ByteFormatter.rate(s.netTxRate.toDouble()), fontSize = 16.sp, fontFamily = FontFamily.Monospace)
+                    }
                 }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("Up", fontSize = 10.sp, color = Muted)
-                    Text(ByteFormatter.rate(s.netTxRate.toDouble()), fontSize = 16.sp, fontFamily = FontFamily.Monospace)
+                val active = s.netInterfaces.filter { it.rxRate > 0 || it.txRate > 0 || it.name != "lo0" }.take(6)
+                active.forEach { iface ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(iface.name, fontSize = 11.sp, fontFamily = FontFamily.Monospace, color = Faint)
+                        Text(
+                            "↓${ByteFormatter.rate(iface.rxRate.toDouble())} ↑${ByteFormatter.rate(iface.txRate.toDouble())}",
+                            fontSize = 11.sp, fontFamily = FontFamily.Monospace, color = Muted,
+                        )
+                    }
                 }
             }
         }
         StatCard("System") {
             Column {
-                s.batteryPercent?.let {
-                    Text("Battery ${it.toInt()}%", fontSize = 12.sp, color = Muted)
-                }
                 Text("Uptime ${uptimeText(s.uptimeSecs)}", fontSize = 12.sp, color = Muted)
             }
         }

@@ -173,6 +173,44 @@ fn parse_netstat() -> Vec<PortEntry> {
     ports
 }
 
+/// Terminate a process by pid — omni `SignalProcessTerminator` parity.
+/// SIGTERM by default, SIGKILL when `force`. The server itself and pid 0/1
+/// are always refused.
+pub fn kill_process(pid: u32, force: bool) -> Result<(), String> {
+    if pid == 0 || pid == 1 || pid == std::process::id() {
+        return Err("refusing to signal this pid".into());
+    }
+    #[cfg(unix)]
+    {
+        let sig = if force { "KILL" } else { "TERM" };
+        let status = std::process::Command::new("kill")
+            .args([format!("-{sig}"), pid.to_string()])
+            .status()
+            .map_err(|e| e.to_string())?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err(format!("kill exited with {status}"))
+        }
+    }
+    #[cfg(windows)]
+    {
+        let mut args = vec!["/PID".to_string(), pid.to_string()];
+        if force {
+            args.push("/F".into());
+        }
+        let status = std::process::Command::new("taskkill")
+            .args(&args)
+            .status()
+            .map_err(|e| e.to_string())?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err(format!("taskkill exited with {status}"))
+        }
+    }
+}
+
 /// Best-effort pid → process-name lookup via sysinfo for entries whose
 /// collector didn't already provide a name (Windows netstat path).
 fn fill_process_names(ports: &mut [PortEntry]) {

@@ -31,7 +31,7 @@ fun AppsScreen(vm: DeckViewModel) {
         while (isActive) {
             if (vm.connState == ConnState.CONNECTED && vm.host.isNotBlank()) {
                 try {
-                    apps = HostApi(vm.host, vm.port).apps()
+                    apps = HostApi(vm.host, vm.port, vm.token).apps()
                     error = null
                 } catch (_: Exception) {
                     error = "Unable to read processes"

@@ -7,6 +7,8 @@ struct PortsView: View {
     @State private var ports: [PortEntry] = []
     @State private var query = ""
     @State private var error: String?
+    @State private var killTarget: PortEntry?
+    @State private var killError: String?
 
     private var filtered: [PortEntry] {
         let q = query.trimmingCharacters(in: .whitespaces)
@@ -23,14 +25,52 @@ struct PortsView: View {
                 EmptyState("No ports", ports.isEmpty ? "No listening ports found" : "No matches")
             } else {
                 List(filtered) { port in
-                    PortRow(port: port)
-                        .listRowBackground(DeckTheme.surface)
+                    PortRow(port: port) {
+                        killTarget = port
+                    }
+                    .listRowBackground(DeckTheme.surface)
                 }
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
             }
         }
         .task { await poll() }
+        .confirmationDialog(
+            "Kill \(killTarget?.process.isEmpty == false ? killTarget!.process : "pid \(killTarget?.pid ?? 0)")?",
+            isPresented: Binding(
+                get: { killTarget != nil },
+                set: { if !$0 { killTarget = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Kill (SIGTERM)", role: .destructive) { kill(force: false) }
+            Button("Force kill (SIGKILL)", role: .destructive) { kill(force: true) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The process owning port \(killTarget?.port ?? 0) will be terminated.")
+        }
+        .alert("Kill failed", isPresented: Binding(
+            get: { killError != nil },
+            set: { if !$0 { killError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(killError ?? "")
+        }
+    }
+
+    private func kill(force: Bool) {
+        guard let target = killTarget,
+              let api = HostAPI(host: model.host, port: model.port, token: model.token)
+        else { return }
+        killTarget = nil
+        Task {
+            do {
+                try await api.killPort(pid: target.pid, force: force)
+            } catch {
+                killError = error.localizedDescription
+            }
+        }
     }
 
     private var header: some View {
@@ -56,7 +96,7 @@ struct PortsView: View {
 
     private func poll() async {
         while !Task.isCancelled {
-            if model.connected, let api = HostAPI(host: model.host, port: model.port) {
+            if model.connected, let api = HostAPI(host: model.host, port: model.port, token: model.token) {
                 do {
                     ports = try await api.ports()
                     error = nil
@@ -90,6 +130,7 @@ private struct EmptyState: View {
 
 private struct PortRow: View {
     let port: PortEntry
+    var onKill: (() -> Void)? = nil
 
     var body: some View {
         HStack(spacing: DeckTheme.Spacing.md) {
@@ -108,5 +149,10 @@ private struct PortRow: View {
                 .foregroundStyle(DeckTheme.faint)
         }
         .padding(.vertical, DeckTheme.Spacing.xs)
+        .swipeActions(edge: .trailing) {
+            if let onKill, port.pid > 0 {
+                Button("Kill", role: .destructive) { onKill() }
+            }
+        }
     }
 }

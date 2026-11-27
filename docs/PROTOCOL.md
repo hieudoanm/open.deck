@@ -63,17 +63,29 @@ every 2 seconds with host (desktop machine) metrics:
   "disk_total": 494384795648,
   "net_rx_rate": 15234,
   "net_tx_rate": 4210,
+  "net_interfaces": [
+    { "name": "en0", "rx_rate": 12000, "tx_rate": 3100 },
+    { "name": "lo0", "rx_rate": 0, "tx_rate": 0 }
+  ],
   "uptime_secs": 3600,
-  "battery_percent": 87.5
+  "battery_percent": 87.5,
+  "battery_state": "discharging",
+  "memory_pressure": 12.0
 }
 ```
 
 Field notes:
 
 - All sizes are **bytes**; `net_rx_rate`/`net_tx_rate` are **bytes per second**
-  measured server-side.
+  measured server-side (sum of `net_interfaces`).
+- `net_interfaces` lists per-interface rates (name + rx/tx bytes/sec);
+  omitted when empty.
 - `disk_*` describes the root filesystem (or first mounted disk).
-- `battery_percent` is omitted when the host has no battery (desktop machines).
+- `battery_percent`/`battery_state` are omitted when the host has no battery
+  (desktop machines). `battery_state` is `"charging"`, `"discharging"`,
+  `"full"`, `"ac"`, `"battery"`, or `"unknown"`.
+- `memory_pressure` is a 0–100 pressure score (higher = more pressure);
+  omitted on platforms without a probe (Windows).
 - Clients use this to render "desktop" stat cards; phone-local stats remain
   client-side.
 
@@ -88,16 +100,25 @@ frame is shared by all connected clients via broadcast.
 In addition to the WebSocket, the server exposes small JSON endpoints used by
 the desktop companions:
 
-| Endpoint                        | Description                                                  |
-| ------------------------------- | ------------------------------------------------------------ |
-| `GET /health`                   | Liveness probe → `ok`                                        |
-| `GET /status`                   | `{clients, desktop_width, desktop_height, fps}`              |
-| `GET /devices`                  | `[{id, name, addr, connected_at}]` — connected clients       |
-| `POST /devices/{id}/disconnect` | Kick a device                                                |
-| `GET /actions`                  | `[{name, kind, detail}]` — available actions                 |
-| `POST /actions/run?token=<t>`   | Body `{"name":"…"}` — run an action (requires pairing token) |
-| `GET /ports`                    | Listening TCP + bound UDP endpoints with pid/process         |
-| `GET /apps`                     | Running processes `[{pid,name,cpu_percent,mem_bytes}]`       |
+| Endpoint                        | Description                                                               |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| `GET /health`                   | Liveness probe → `ok`                                                     |
+| `GET /status`                   | `{clients, desktop_width, desktop_height, fps}`                           |
+| `GET /devices`                  | `[{id, name, addr, connected_at}]` — connected clients                    |
+| `POST /devices/{id}/disconnect` | Kick a device                                                             |
+| `GET /actions`                  | `[{name, kind, detail}]` — available actions                              |
+| `POST /actions/run?token=<t>`   | Body `{"name":"…"}` — run an action (requires pairing token)              |
+| `GET /ports`                    | Listening TCP + bound UDP endpoints with pid/process                      |
+| `POST /ports/kill?token=<t>`    | Body `{"pid":123,"force":false}` — SIGTERM/SIGKILL a pid                  |
+| `GET /apps`                     | Running processes `[{pid,name,cpu_percent,mem_bytes}]`                    |
+| `GET /clipboard?token=<t>`      | Desktop clipboard history `[{id,content,is_url,created_at,copied_count}]` |
+| `POST /clipboard?token=<t>`     | Body `{"content":"…"}` — write to OS clipboard + record                   |
+| `DELETE /clipboard?token=<t>`   | Clear desktop clipboard history                                           |
+
+`/ports/kill` and all `/clipboard` routes require the pairing token —
+kill is destructive and clipboard contents are private. `/ports/kill`
+sends SIGTERM by default, SIGKILL when `"force":true`; the server's own
+pid and pid 0/1 are refused.
 
 ## Client → Server
 
