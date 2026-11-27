@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Win32Interop;
+using Microsoft.UI;
 using Microsoft.UI.Xaml.Media.Imaging;
 using QRCoder;
 using Windows.ApplicationModel.DataTransfer;
