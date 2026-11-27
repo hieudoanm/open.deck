@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 gtk4 = "=0.11.5"
 libadwaita = "=0.9.2"
 glib = "=0.22.11"
-qrcode = "=0.14.1"
+qrcode = "=0.15.0"
 
 [package.metadata.bundle]
 appid = "dev.opendeck.linux"
