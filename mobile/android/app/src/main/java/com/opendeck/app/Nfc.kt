@@ -46,12 +46,11 @@ object NfcTags {
         // getType/getMaxSize are cached properties but guard anyway —
         // inspect() runs off the main thread and must never throw.
         val ndef = runCatching { Ndef.get(tag) }.getOrNull()
-        val ndefType = runCatching { ndef?.type }.getOrNull()
         val ndefMax = runCatching { ndef?.maxSize }.getOrNull() ?: 0
         return NfcTagInfo(
             uid = tag.id?.joinToString("") { "%02X".format(it) } ?: "",
             techs = tag.techList.map { it.substringAfterLast('.') },
-            isWritable = ndefType == Ndef.TYPE_NDEF,
+            isWritable = runCatching { ndef?.isWritable == true }.getOrDefault(false),
             isNdefFormattable = runCatching { NdefFormatable.get(tag) != null }
                 .getOrDefault(false),
             maxSize = ndefMax,

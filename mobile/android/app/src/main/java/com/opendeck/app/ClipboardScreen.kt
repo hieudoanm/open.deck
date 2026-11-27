@@ -193,6 +193,7 @@ fun ClipboardScreen(vm: DeckViewModel) {
 
         if (useDesktop) {
             DesktopClipboardList(
+                modifier = Modifier.weight(1f),
                 items = desktopItems,
                 error = desktopError,
                 onCopy = { item ->
@@ -203,7 +204,14 @@ fun ClipboardScreen(vm: DeckViewModel) {
                 },
             )
         } else {
-            PhoneClipboardContent(monitor, filtered, query, fmt, onQuery = { query = it })
+            PhoneClipboardContent(
+                modifier = Modifier.weight(1f),
+                monitor = monitor,
+                filtered = filtered,
+                query = query,
+                fmt = fmt,
+                onQuery = { query = it },
+            )
         }
     }
 
@@ -244,6 +252,7 @@ fun ClipboardScreen(vm: DeckViewModel) {
 /// Phone-local clipboard history (search + pin/delete).
 @Composable
 private fun PhoneClipboardContent(
+    modifier: Modifier,
     monitor: ClipboardMonitor,
     filtered: List<ClipItem>,
     query: String,
@@ -260,14 +269,14 @@ private fun PhoneClipboardContent(
     Spacer(Modifier.height(8.dp))
 
     if (filtered.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier, contentAlignment = Alignment.Center) {
             Text(
                 if (query.isEmpty()) "Copy something — it will appear here." else "No matches",
                 color = Muted, fontSize = 13.sp,
             )
         }
     } else {
-        LazyColumn(Modifier.weight(1f)) {
+        LazyColumn(modifier) {
             items(filtered, key = { it.id }) { item ->
                 Row(
                     Modifier
@@ -301,19 +310,20 @@ private fun PhoneClipboardContent(
 /// *desktop* clipboard via `POST /clipboard`.
 @Composable
 private fun DesktopClipboardList(
+    modifier: Modifier,
     items: List<ClipboardEntry>,
     error: String?,
     onCopy: (ClipboardEntry) -> Unit,
 ) {
     if (items.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Box(modifier, contentAlignment = Alignment.Center) {
             Text(
                 error ?: "Copy something on the desktop — it will appear here.",
                 color = Muted, fontSize = 13.sp,
             )
         }
     } else {
-        LazyColumn(Modifier.weight(1f)) {
+        LazyColumn(modifier) {
             items(items, key = { it.id }) { item ->
                 Row(
                     Modifier
