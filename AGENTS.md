@@ -3,6 +3,7 @@
 ## Build / verify commands
 
 - Server: `cd server && cargo build` (verify: `cargo fmt --all -- --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`)
+- Web UI: `cd mobile/web && pnpm install && pnpm build`, then copy `dist/` to `server/web/` (`make web` does both). `server/web/` is Vite build output embedded into the server binary via `include_dir` — edit source in `mobile/web/src`, never the built files.
 - Landing site: `pnpm install && pnpm lint && pnpm typecheck && pnpm --filter @opendeck/landing build`
 - iOS app: `cd mobile/ios && xcodegen generate && xcodebuild -project OpenDeck.xcodeproj -scheme OpenDeck -destination 'generic/platform=iOS Simulator' -configuration Debug build CODE_SIGNING_ALLOWED=NO`
 - macOS app: `cd desktop/macos && xcodegen generate && xcodebuild -project OpenDeckMac.xcodeproj -scheme OpenDeckMac -configuration Debug build CODE_SIGNING_ALLOWED=NO`

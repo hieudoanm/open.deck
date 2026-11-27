@@ -19,7 +19,9 @@ Useful flags: `--bind`, `--port` (default `47821`), `--fps`, `--quality`,
 pairing token, WebSocket URL, path, and monitor size — desktop companion apps
 parse it, so keep the format stable.
 
-HTTP endpoints: `GET /health`, `GET /status` (JSON client count + desktop/stream
+HTTP endpoints: `GET /` and any other unmatched path serve the embedded web
+UI — the Vite build output in `server/web/` (source: `mobile/web/`, built via
+`make web`). `GET /health`, `GET /status` (JSON client count + desktop/stream
 info), `GET /ports` + `POST /ports/kill` (SIGTERM/SIGKILL, token-required) +
 `GET /apps` (host introspection — listening sockets via `lsof`/`netstat`,
 processes via `sysinfo`; both spawn-blocking), `GET|POST|DELETE /clipboard`

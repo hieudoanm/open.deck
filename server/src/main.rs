@@ -23,7 +23,7 @@ use axum::{
         ConnectInfo, Path as AxumPath, Query, State,
     },
     http::StatusCode,
-    response::{Html, IntoResponse, Response},
+    response::{IntoResponse, Response},
     routing::{get, post},
     Json, Router,
 };
@@ -179,10 +179,8 @@ async fn main() -> Result<()> {
     });
 
     let app = Router::new()
-        .route("/", get(index_handler))
-        .route("/manifest.webmanifest", get(manifest_handler))
-        .route("/icons/{name}", get(icon_handler))
-        .route("/wake.mp4", get(wake_video_handler))
+        .route("/", get(web_index_handler))
+        .route("/{*path}", get(web_asset_handler))
         .route("/health", get(|| async { "ok" }))
         .route("/status", get(status_handler))
         .route("/devices", get(devices_handler))
@@ -243,44 +241,50 @@ async fn main() -> Result<()> {
 }
 
 /// Browser remote-desktop client, compiled into the binary so a single
-/// `open-deck-server` executable serves both the API and the web UI.
-const INDEX_HTML: &str = include_str!("../web/index.html");
-const MANIFEST: &str = include_str!("../web/manifest.webmanifest");
+/// The Vite build output in `server/web/` is embedded into the binary, so a
+/// single `open-deck-server` executable serves both the API and the web UI.
+static WEB_DIR: include_dir::Dir<'_> = include_dir::include_dir!("$CARGO_MANIFEST_DIR/web");
 
-async fn index_handler() -> Html<&'static str> {
-    Html(INDEX_HTML)
+fn web_content_type(path: &str) -> &'static str {
+    match path.rsplit('.').next() {
+        Some("html") => "text/html; charset=utf-8",
+        Some("js" | "mjs") => "text/javascript; charset=utf-8",
+        Some("css") => "text/css; charset=utf-8",
+        Some("webmanifest") => "application/manifest+json",
+        Some("json") => "application/json",
+        Some("png") => "image/png",
+        Some("svg") => "image/svg+xml",
+        Some("ico") => "image/x-icon",
+        Some("mp4") => "video/mp4",
+        Some("woff2") => "font/woff2",
+        _ => "application/octet-stream",
+    }
 }
 
-async fn manifest_handler() -> impl IntoResponse {
-    (
-        [(
-            axum::http::header::CONTENT_TYPE,
-            "application/manifest+json",
-        )],
-        MANIFEST,
-    )
-}
-
-async fn wake_video_handler() -> impl IntoResponse {
-    (
-        [(axum::http::header::CONTENT_TYPE, "video/mp4")],
-        include_bytes!("../web/wake.mp4").as_slice(),
-    )
-}
-
-async fn icon_handler(AxumPath(name): AxumPath<String>) -> Response {
-    let icon: Option<&'static [u8]> = match name.as_str() {
-        "apple-touch-icon.png" | "icon-180.png" => {
-            Some(include_bytes!("../web/icons/icon-180.png"))
+fn serve_web_file(rel: &str) -> Response {
+    match WEB_DIR.get_file(rel) {
+        Some(file) => {
+            let ct = web_content_type(file.path().to_string_lossy().as_ref());
+            ([(axum::http::header::CONTENT_TYPE, ct)], file.contents()).into_response()
         }
-        "icon-192.png" => Some(include_bytes!("../web/icons/icon-192.png")),
-        "icon-512.png" => Some(include_bytes!("../web/icons/icon-512.png")),
-        _ => None,
-    };
-    match icon {
-        Some(bytes) => ([(axum::http::header::CONTENT_TYPE, "image/png")], bytes).into_response(),
         None => StatusCode::NOT_FOUND.into_response(),
     }
+}
+
+async fn web_index_handler() -> Response {
+    serve_web_file("index.html")
+}
+
+async fn web_asset_handler(AxumPath(path): AxumPath<String>) -> Response {
+    let rel = path.trim_start_matches('/');
+    if WEB_DIR.get_file(rel).is_some() {
+        return serve_web_file(rel);
+    }
+    // SPA fallback: extensionless paths get the app shell.
+    if !rel.contains('.') {
+        return serve_web_file("index.html");
+    }
+    StatusCode::NOT_FOUND.into_response()
 }
 
 async fn status_handler(State(state): State<Arc<AppState>>) -> axum::Json<Status> {

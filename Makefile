@@ -6,12 +6,14 @@
 #   make test     cargo test in server/
 #   make lint     cargo fmt --check + clippy in server/
 #
+#   make web      build the web UI (mobile/web) and copy dist/ into server/web
+#
 # Server flags: --port (default 47821), --fps, --quality, --max-width,
-# --bind, --token, --actions. The web client is served at http://localhost:47821/
+# --bind, --token, --actions. The web UI is served at http://localhost:47821/
 
 PORT ?= 47821
 
-.PHONY: dev dev-rel build test lint run
+.PHONY: dev dev-rel build test lint web
 
 dev: ## Start the companion server locally (debug)
 	cd server && cargo run -- --port $(PORT)
@@ -28,3 +30,7 @@ test: ## Run server tests
 lint: ## Format check + clippy for the server
 	cd server && cargo fmt --all -- --check
 	cd server && cargo clippy --all-targets -- -D warnings
+
+web: ## Build mobile/web (Vite) and copy dist/ into server/web
+	cd mobile/web && pnpm install && pnpm build
+	rm -rf server/web && cp -r mobile/web/dist server/web
