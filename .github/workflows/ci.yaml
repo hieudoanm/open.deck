@@ -301,7 +301,7 @@ jobs:
       # Microsoft.Build.Packaging.Pri.Tasks.dll that WinUI 3's MrtCore
       # targets require.
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4.3.1
+        uses: actions/setup-dotnet@v6.1.0
         with:
           dotnet-version: 8.0.428
 
