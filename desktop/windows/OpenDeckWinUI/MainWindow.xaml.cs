@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -8,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
 using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using QRCoder;
 using Windows.ApplicationModel.DataTransfer;
@@ -92,10 +94,10 @@ public sealed partial class MainWindow : Window
 
     private void SaveSettings()
     {
-        Settings.Values["port"] = PortBox.Value ?? 47821;
-        Settings.Values["fps"] = FpsBox.Value ?? 15;
+        Settings.Values["port"] = PortBox.Value;
+        Settings.Values["fps"] = FpsBox.Value;
         Settings.Values["quality"] = (int)(QualitySlider.Value);
-        Settings.Values["maxwidth"] = WidthBox.Value ?? 1280;
+        Settings.Values["maxwidth"] = WidthBox.Value;
         Settings.Values["token"] = CustomTokenBox.Text ?? "";
     }
 
@@ -337,18 +339,18 @@ public sealed partial class MainWindow : Window
     private IntPtr _trayOldProc;
     private bool _trayAdded;
 
-    private void TrayButton_Click(object sender, RoutedEventArgs e) => Hide();
+    private void TrayButton_Click(object sender, RoutedEventArgs e) => AppWindow.Hide();
 
     private void ShowFromTray()
     {
-        Show();
+        AppWindow.Show();
         Activate();
         SetForegroundWindow(_trayHwnd);
     }
 
     private void InitTrayIcon()
     {
-        _trayHwnd = WindowNative.GetWindowHandle(this);
+        _trayHwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
         if (_trayHwnd == IntPtr.Zero) return;
 
         // Subclass the window proc to receive tray callback messages.
