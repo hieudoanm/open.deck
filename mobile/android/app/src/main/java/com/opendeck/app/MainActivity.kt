@@ -1,6 +1,7 @@
 package com.opendeck.app
 
 import android.content.Intent
+import android.nfc.NfcAdapter
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
@@ -23,6 +24,7 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -31,26 +33,56 @@ import androidx.compose.ui.unit.dp
 
 class MainActivity : ComponentActivity() {
     private val vm: DeckViewModel by viewModels()
+    private lateinit var nfc: NfcDispatcher
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
-        handleDeepLink(intent)
+        vm.focusMode = FocusMode.isEnabled(this)
+        nfc = NfcDispatcher(this) { tag -> vm.onTagScanned(tag) }
+        handleIncoming(intent)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
-                    if (vm.connState == ConnState.CONNECTED) {
-                        DeckScreen(vm)
-                    } else {
-                        ConnectScreen(vm)
+                    when {
+                        vm.showNfc -> NfcScreen(vm)
+                        vm.connState == ConnState.CONNECTED -> DeckScreen(vm)
+                        else -> ConnectScreen(vm)
                     }
                 }
             }
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        nfc.enable()
+    }
+
+    override fun onPause() {
+        nfc.disable()
+        super.onPause()
+    }
+
+    override fun onStop() {
+        // Auto-disconnect on exit: leaving the app ends the remote session.
+        if (vm.connState == ConnState.CONNECTED) vm.disconnect()
+        super.onStop()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleDeepLink(intent)
+        handleIncoming(intent)
+    }
+
+    /// NFC tag intents carry EXTRA_TAG; everything else falls through to the
+    /// opendeck://connect deep link (QR / manifest-discovered pairing tags).
+    private fun handleIncoming(intent: Intent?) {
+        if (intent == null) return
+        if (intent.hasExtra(NfcAdapter.EXTRA_TAG)) {
+            nfc.handleIntent(intent)
+        } else {
+            handleDeepLink(intent)
+        }
     }
 
     /// Fill the connect form from an `opendeck://connect?host=…&port=…&token=…`
@@ -114,9 +146,62 @@ fun ConnectScreen(vm: DeckViewModel) {
             Text(if (vm.connState == ConnState.CONNECTING) "Connecting…" else "Connect")
         }
         Spacer(Modifier.height(12.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column {
+                Text("NFC tools", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "Read / write tags & pairing",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.DarkGray,
+                )
+            }
+            TextButton(onClick = { vm.openNfc() }) { Text("Open") }
+        }
+        Spacer(Modifier.height(8.dp))
+        val context = LocalContext.current
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column {
+                Text("Session focus mode", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "Stay in OpenDeck while connected",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.DarkGray,
+                )
+            }
+            Switch(
+                checked = vm.focusMode,
+                onCheckedChange = {
+                    vm.focusMode = it
+                    FocusMode.set(context, it)
+                },
+            )
+        }
+        if (vm.focusMode) {
+            Text(
+                "Requires the Accessibility permission — enable it in system settings if asked.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.DarkGray,
+            )
+            TextButton(onClick = {
+                context.startActivity(
+                    Intent(
+                        android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS,
+                    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }) { Text("Open accessibility settings") }
+        }
+        Spacer(Modifier.height(12.dp))
         Text(vm.status, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
         Text(
-            "Tip: scan the desktop QR or tap an NFC pairing tag",
+            "Tip: scan the desktop QR or tap an NFC tag",
             style = MaterialTheme.typography.bodySmall,
             color = Color.DarkGray,
         )
@@ -178,8 +263,9 @@ fun DeckScreen(vm: DeckViewModel) {
                 }
             }
             .onPreviewKeyEvent { ev ->
-                if (ev.action == KeyEvent.ACTION_DOWN) {
-                    keyNameFor(ev.keyCode)?.let { vm.key(it); true } ?: false
+                val native = ev.nativeKeyEvent
+                if (native.action == KeyEvent.ACTION_DOWN) {
+                    keyNameFor(native.keyCode)?.let { vm.key(it); true } ?: false
                 } else false
             },
         contentAlignment = Alignment.Center,
@@ -207,7 +293,10 @@ fun DeckScreen(vm: DeckViewModel) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(vm.status, color = Color.White, style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = { vm.disconnect() }) { Text("Disconnect", color = Color.White) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { vm.openNfc() }) { Text("NFC", color = Color.White) }
+                TextButton(onClick = { vm.disconnect() }) { Text("Disconnect", color = Color.White) }
+            }
         }
 
         // Bottom control cluster
@@ -228,6 +317,93 @@ fun DeckScreen(vm: DeckViewModel) {
             DeckButton("▼") { vm.key("ArrowDown") }
             DeckButton("▶") { vm.key("ArrowRight") }
         }
+    }
+}
+
+@Composable
+fun NfcScreen(vm: DeckViewModel) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TextButton(onClick = { vm.closeNfc() }) { Text("← Back") }
+            Text("NFC Tools", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.width(8.dp))
+        }
+
+        if (vm.nfcBusy) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+        }
+        vm.nfcMessage?.let {
+            Text(it, style = MaterialTheme.typography.bodySmall, color = Color(0xFF8AFACC))
+        }
+
+        vm.nfcInfo?.let { info ->
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Technologies", style = MaterialTheme.typography.labelMedium)
+                    Text(
+                        info.techs.joinToString(", "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray,
+                    )
+                    if (info.records.isNotEmpty()) {
+                        Text("Records", style = MaterialTheme.typography.labelMedium)
+                        info.records.forEach { record ->
+                            Text(
+                                "• $record",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.White,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        Text("Write to a tag", style = MaterialTheme.typography.titleSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = vm.writeAsUri,
+                onClick = { vm.writeAsUri = true },
+                label = { Text("URI") },
+            )
+            FilterChip(
+                selected = !vm.writeAsUri,
+                onClick = { vm.writeAsUri = false },
+                label = { Text("Text") },
+            )
+        }
+        OutlinedTextField(
+            value = vm.writeValue,
+            onValueChange = { vm.writeValue = it },
+            label = {
+                Text(if (vm.writeAsUri) "URI (e.g. https://…)" else "Text")
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Button(
+            onClick = { vm.armWrite() },
+            enabled = !vm.nfcBusy && vm.writeValue.isNotBlank(),
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+        ) {
+            Text("Write — then tap a tag")
+        }
+        Text(
+            "Reading works for any NDEF tag; writing needs a writable NDEF/NdefFormatable tag.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.DarkGray,
+        )
     }
 }
 

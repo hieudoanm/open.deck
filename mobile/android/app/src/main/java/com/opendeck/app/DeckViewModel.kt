@@ -1,6 +1,8 @@
 package com.opendeck.app
 
 import android.graphics.Bitmap
+import android.net.Uri
+import android.nfc.Tag
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,6 +23,16 @@ class DeckViewModel : ViewModel() {
     var connState by mutableStateOf(ConnState.DISCONNECTED)
     var frame by mutableStateOf<ImageBitmap?>(null)
     var hello by mutableStateOf<HelloInfo?>(null)
+    var focusMode by mutableStateOf(false)
+
+    // NFC tool state
+    var showNfc by mutableStateOf(false)
+    var nfcInfo by mutableStateOf<NfcTagInfo?>(null)
+    var nfcMessage by mutableStateOf<String?>(null)
+    var nfcBusy by mutableStateOf(false)
+    var writeAsUri by mutableStateOf(true)
+    var writeValue by mutableStateOf("")
+    private var pendingWrite = false
 
     private val ioScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var client: DeckClient? = null
@@ -38,6 +50,7 @@ class DeckViewModel : ViewModel() {
                 viewModelScope.launch(Dispatchers.Main) {
                     connState = state
                     status = msg
+                    SessionState.deckConnected = state == ConnState.CONNECTED
                     if (state == ConnState.DISCONNECTED) {
                         frame = null
                         hello = null
@@ -54,6 +67,80 @@ class DeckViewModel : ViewModel() {
         if (p.isNotEmpty()) this.port = p
         if (!token.isNullOrBlank()) this.token = token
         if (connState == ConnState.DISCONNECTED) status = "Pairing details filled — tap Connect"
+    }
+
+    /// Fill the connect form from an `opendeck://connect` URI string (used for
+    /// NFC pairing tags, whose payload is the same URI the QR encodes).
+    fun applyConnectUri(uriString: String) {
+        val uri = Uri.parse(uriString)
+        applyDeepLink(
+            host = uri.getQueryParameter("host"),
+            port = uri.getQueryParameter("port"),
+            token = uri.getQueryParameter("token"),
+        )
+    }
+
+    /// Handle a tag delivered by [NfcDispatcher]. Reads the tag; if a write is
+    /// armed via [armWrite] it writes instead. Pairing tags fill the form.
+    fun onTagScanned(tag: Tag) {
+        if (pendingWrite) {
+            pendingWrite = false
+            nfcBusy = true
+            nfcMessage = "Writing…"
+            val value = writeValue
+            val isUri = writeAsUri
+            ioScope.launch {
+                val error = NfcTags.write(tag, value, isUri)
+                val info = NfcTags.inspect(tag)
+                viewModelScope.launch(Dispatchers.Main) {
+                    nfcBusy = false
+                    nfcInfo = info
+                    nfcMessage = error ?: "Wrote '${value.trim()}' to tag"
+                    writeValue = ""
+                }
+            }
+            return
+        }
+
+        nfcBusy = true
+        nfcMessage = "Reading tag…"
+        ioScope.launch {
+            val info = NfcTags.inspect(tag)
+            viewModelScope.launch(Dispatchers.Main) {
+                nfcBusy = false
+                if (info.connectUri != null) {
+                    applyConnectUri(info.connectUri)
+                    nfcMessage = "Pairing details filled — tap Connect"
+                } else {
+                    nfcInfo = info
+                    nfcMessage = null
+                    showNfc = true
+                }
+            }
+        }
+    }
+
+    /// Arm a pending write; the next scanned tag receives [writeValue].
+    fun armWrite() {
+        if (writeValue.isBlank()) {
+            nfcMessage = "Enter a value first"
+            return
+        }
+        pendingWrite = true
+        nfcMessage = "Write armed — tap a tag now"
+        showNfc = true
+    }
+
+    fun openNfc() {
+        nfcMessage = nfcMessage ?: "Tap a tag to read it, or arm a write below"
+        showNfc = true
+    }
+
+    fun closeNfc() {
+        showNfc = false
+        nfcInfo = null
+        nfcMessage = null
+        pendingWrite = false
     }
 
     fun connect() {

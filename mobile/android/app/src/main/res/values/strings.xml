@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="focus_mode_description">Keeps you in OpenDeck while a remote session is active. Enable in OpenDeck settings; requires the Accessibility permission.</string>
+</resources>

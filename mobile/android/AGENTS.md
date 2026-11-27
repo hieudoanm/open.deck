@@ -31,6 +31,19 @@ Requires JDK 17+ and the Android SDK (`compileSdk = 35`, `minSdk = 26`).
   `opendeck://connect?host=…&port=…&token=…` intents (the desktop QR payload,
   registered in the manifest for both `VIEW` and `NDEF_DISCOVERED` so an NFC
   tag holding the URI also pairs) to `DeckViewModel.applyDeepLink`.
+  `NfcDispatcher` is enabled in `onResume`/`onPause`; tag intents go to
+  `DeckViewModel.onTagScanned`. `onStop` disconnects an active session.
+- `Nfc.kt` — NFC toolkit (ported from omni, no DI): `NfcTags.inspect/write`
+  for NDEF read/write with URI/text/MIME record decoding, and
+  `NfcDispatcher` wrapping `enableForegroundDispatch`.
+- `DeckViewModel.kt` — also owns NFC UI state (`showNfc`, `nfcInfo`,
+  `nfcBusy`, `writeAsUri`/`writeValue`, `pendingWrite`) and the
+  `focusMode` toggle; publishes `SessionState.deckConnected` for the
+  accessibility service.
+- `Focus.kt` / `OpenDeckAccessibilityService.kt` — session focus mode:
+  while connected and enabled, leaving OpenDeck brings it back via
+  `TYPE_WINDOW_STATE_CHANGED` events. `FocusMode` persists the setting;
+  the service reads SharedPreferences directly (no IPC).
 
 ## Conventions
 

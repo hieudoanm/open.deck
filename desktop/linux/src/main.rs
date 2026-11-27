@@ -220,7 +220,6 @@ fn build_ui(app: &adw::Application) -> adw::Window {
     token_row.add_suffix(&copy);
 
     let qr_picture = gtk4::Picture::new();
-    qr_picture.set_content_fit(gtk4::ContentFit::Contain);
     qr_picture.set_size_request(160, 160);
     qr_picture.set_valign(gtk4::Align::Center);
     qr_picture.set_visible(false);
@@ -453,7 +452,7 @@ fn build_ui(app: &adw::Application) -> adw::Window {
                     let shared_out = shared_start.clone();
                     std::thread::spawn(move || {
                         let mut lines = BufReader::new(stdout).lines();
-                        while let Ok(Some(line)) = lines.next() {
+                        while let Some(Ok(line)) = lines.next() {
                             let line = line.trim().to_string();
                             if line.is_empty() {
                                 continue;
@@ -502,7 +501,7 @@ fn build_ui(app: &adw::Application) -> adw::Window {
                     let tx_err = ui_tx_start.clone();
                     std::thread::spawn(move || {
                         let mut lines = BufReader::new(stderr).lines();
-                        while let Ok(Some(line)) = lines.next() {
+                        while let Some(Ok(line)) = lines.next() {
                             let line = line.trim().to_string();
                             if !line.is_empty() {
                                 let _ = tx_err.send(UiMsg::Log(line));

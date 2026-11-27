@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media.Imaging;
 using QRCoder;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Streams;
@@ -37,7 +38,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        var port = (int)(PortBox.Value ?? 47821);
+        var port = PortBox.Value is double v ? (int)v : 47821;
         var psi = new ProcessStartInfo(binary)
         {
             Arguments = $"--port {port}",
@@ -124,7 +125,7 @@ public sealed partial class MainWindow : Window
 
     private void ShowQr(string token)
     {
-        var port = (int)(PortBox.Value ?? 47821);
+        var port = PortBox.Value is double v ? (int)v : 47821;
         var payload = $"opendeck://connect?host={LanIp()}&port={port}&token={token}";
         using var gen = new QRCodeGenerator();
         using var data = gen.CreateQrCode(payload, QRCodeGenerator.ECCLevel.M);
@@ -138,7 +139,7 @@ public sealed partial class MainWindow : Window
             writer.WriteBytes(bytes);
             writer.StoreAsync().AsTask().Wait();
         }
-        _ = stream.FlushAsync().AsTask().Wait();
+        stream.FlushAsync().AsTask().Wait();
         bitmap.SetSourceAsync(stream).AsTask().Wait();
         QrImage.Source = bitmap;
     }

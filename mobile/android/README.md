@@ -32,6 +32,23 @@ Application id: `com.opendeck.app`, minSdk 26, targetSdk 35.
 3. Tap **Connect** — the desktop streams in; touch maps to absolute-pointer
    mouse control and the bottom bar sends ESC/TAB/ENTER/DEL/arrows.
 
+## NFC tools
+
+The connect screen has an **NFC tools** entry (also reachable from the deck
+top bar). Tap any NDEF tag to see its technologies and decoded records
+(URI/text/MIME). Use the write section to put a URI or text record on a
+writable tag — tap-to-pair still works: a tag holding an
+`opendeck://connect?…` URI fills the connect form automatically.
+
+## Session focus & auto-disconnect
+
+- **Session focus mode** (toggle on the connect screen) keeps OpenDeck in
+  the foreground during a session via `OpenDeckAccessibilityService`. It
+  needs the Accessibility permission — the app links to system settings.
+- **Auto-disconnect on exit**: `MainActivity.onStop` disconnects the
+  WebSocket when the app leaves the foreground, so sessions never linger
+  after you switch away.
+
 ## Layout
 
 - `app/src/main/java/com/opendeck/app/DeckClient.kt` — OkHttp WebSocket client:
@@ -43,10 +60,18 @@ Application id: `com.opendeck.app`, minSdk 26, targetSdk 35.
 - `DeckViewModel.kt` — holds connection form state, latest frame
   (`ImageBitmap`) and `HelloInfo`; owns the `DeckClient`; `applyDeepLink`
   pre-fills the form from `opendeck://connect` links.
-- `MainActivity.kt` — Compose UI: `ConnectScreen` (host/port/token form) and
-  `DeckScreen` (stream view, letterbox-aware touch→desktop coordinate mapping,
-  hardware-key mapping, control buttons); also routes deep-link intents to the
-  view model.
+- `MainActivity.kt` — Compose UI: `ConnectScreen` (host/port/token form,
+  NFC-tools entry, focus-mode toggle), `NfcScreen` (tag read/write) and
+  `DeckScreen` (stream view, letterbox-aware touch→desktop coordinate
+  mapping, hardware-key mapping, control buttons); routes NFC tag intents
+  and deep links to the view model; `onStop` auto-disconnects.
+- `Nfc.kt` — `NfcTags` (NDEF read/write + record decoding, ported from the
+  omni NFC Toolkit) and `NfcDispatcher` (foreground dispatch).
+- `Focus.kt` + `OpenDeckAccessibilityService.kt` — session focus mode:
+  `SessionState.deckConnected` is set by the view model; the accessibility
+  service (manifest-registered, `res/xml/accessibility_service_config.xml`)
+  returns to OpenDeck when the user switches apps mid-session.
+  `FocusMode` persists the toggle in SharedPreferences.
 
 ## Notes
 

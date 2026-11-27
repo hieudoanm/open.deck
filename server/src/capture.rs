@@ -47,6 +47,24 @@ pub fn spawn_capture(cfg: CaptureConfig) -> Result<(broadcast::Sender<Arc<Frame>
 
     tokio::task::spawn_blocking(move || {
         let interval = Duration::from_secs_f64(1.0 / cfg.fps.max(1) as f64);
+        // xcap::Monitor is not Send on Windows (it wraps a raw HMONITOR
+        // handle), so resolve it inside the blocking thread instead of
+        // capturing it across the spawn boundary.
+        let monitors = Monitor::all().unwrap_or_default();
+        let primary = monitors
+            .iter()
+            .position(|m| m.is_primary().unwrap_or(false));
+        let monitor = match primary {
+            Some(i) => {
+                let mut v = monitors;
+                Some(v.swap_remove(i))
+            }
+            None => monitors.into_iter().next(),
+        };
+        let Some(monitor) = monitor else {
+            warn!("no monitor found in capture thread");
+            return;
+        };
         loop {
             let start = std::time::Instant::now();
             if tx2.receiver_count() > 0 {
