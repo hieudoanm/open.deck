@@ -35,8 +35,10 @@ class DeckViewModel(app: Application) : AndroidViewModel(app) {
     var nfcInfo by mutableStateOf<NfcTagInfo?>(null)
     var nfcMessage by mutableStateOf<String?>(null)
     var nfcBusy by mutableStateOf(false)
-    var writeAsUri by mutableStateOf(true)
-    var writeValue by mutableStateOf("")
+    // Write composer — independent text + URI fields, both optional,
+    // composed into one NDEF message (iOS/omni parity).
+    var writeText by mutableStateOf("")
+    var writeUri by mutableStateOf("")
     private var pendingWrite = false
 
     // NFC history + settings — parity with iOS DeckModel.history/.settings.
@@ -100,16 +102,17 @@ class DeckViewModel(app: Application) : AndroidViewModel(app) {
             pendingWrite = false
             nfcBusy = true
             nfcMessage = "Writing…"
-            val value = writeValue
-            val isUri = writeAsUri
+            val text = writeText
+            val uri = writeUri
             ioScope.launch {
-                val error = NfcTags.write(tag, value, isUri)
+                val error = NfcTags.write(tag, text, uri)
                 val info = NfcTags.inspect(tag)
                 viewModelScope.launch(Dispatchers.Main) {
                     nfcBusy = false
                     nfcInfo = info
-                    nfcMessage = error ?: "Wrote '${value.trim()}' to tag"
-                    writeValue = ""
+                    nfcMessage = error ?: "Wrote to tag"
+                    writeText = ""
+                    writeUri = ""
                 }
             }
             return
@@ -150,10 +153,11 @@ class DeckViewModel(app: Application) : AndroidViewModel(app) {
         getApplication<Application>().startActivity(intent)
     }
 
-    /// Arm a pending write; the next scanned tag receives [writeValue].
+    /// Arm a pending write; the next scanned tag receives the composed
+    /// text/URI records.
     fun armWrite() {
-        if (writeValue.isBlank()) {
-            nfcMessage = "Enter a value first"
+        if (writeText.isBlank() && writeUri.isBlank()) {
+            nfcMessage = "Enter a text or URI value first"
             return
         }
         pendingWrite = true

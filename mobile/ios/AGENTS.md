@@ -30,7 +30,7 @@ xcodebuild -project OpenDeck.xcodeproj -scheme OpenDeck \
 - `OpenDeck/DeckModel.swift` — `@MainActor ObservableObject`: form fields
   (`host`, `port`, `token`), `status`, `connected`, `frame`, `hello`,
   `desktopStats` (server `stats` frames), `page`, NFC state
-  (`nfcInfo`, `nfcBusy`, `writeAsUri`/`writeValue`) and `nfcService`;
+  (`nfcInfo`, `nfcBusy`, `writeText`/`writeURI`) and `nfcService`;
   `scanNfc`/`writeNfc`/`openNfc`/`closeNfc`; a scanned
   `opendeck://connect` URI record fills the form via `handleOpenURL`
   (Android `onTagScanned` parity); thin pass-throughs to `DeckClient`.

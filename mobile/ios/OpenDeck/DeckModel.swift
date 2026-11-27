@@ -20,8 +20,10 @@ final class DeckModel: ObservableObject {
     @Published var nfcInfo: TagInfo?
     @Published var nfcMessage: String?
     @Published var nfcBusy = false
-    @Published var writeAsUri = true
-    @Published var writeValue = ""
+    // Write composer — omni NfcHomeView parity: independent text + URI
+    // fields, both optional, composed into one NDEF message.
+    @Published var writeText = ""
+    @Published var writeURI = ""
 
     let nfcService = NfcService()
     let settings = SettingsStore()
@@ -141,21 +143,26 @@ final class DeckModel: ObservableObject {
         }
     }
 
-    /// Write the composed URI/text record, then present the write session.
+    /// Compose text/URI records and write them, then present the write
+    /// session (omni `composerRecords`/`writeToTag` parity).
     func writeNfc() async {
-        let value = writeValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !value.isEmpty else {
-            nfcMessage = "Enter a value first"
+        var records: [NdefRecord] = []
+        let text = writeText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !text.isEmpty { records.append(.text(text, languageCode: "en")) }
+        let uri = writeURI.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !uri.isEmpty { records.append(.uri(uri)) }
+        guard !records.isEmpty else {
+            nfcMessage = "Enter a text or URI value first"
             return
         }
-        let record: NdefRecord = writeAsUri ? .uri(value) : .text(value, languageCode: "en")
         nfcBusy = true
         nfcMessage = "Writing…"
         do {
-            try await nfcService.writeTag([record])
+            try await nfcService.writeTag(records)
             nfcBusy = false
-            nfcMessage = "Wrote '\(value)' to tag"
-            writeValue = ""
+            nfcMessage = "Wrote \(records.count) record(s) to tag"
+            writeText = ""
+            writeURI = ""
         } catch {
             nfcBusy = false
             nfcMessage = (error as? NfcError) == .cancelled ? nil : error.localizedDescription

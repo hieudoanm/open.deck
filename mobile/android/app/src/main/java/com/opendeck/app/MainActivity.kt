@@ -431,18 +431,15 @@ fun NfcScreen(vm: DeckViewModel) {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (info.uid.isNotEmpty()) {
-                        Text(
-                            "UID: ${info.uid}",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontFamily = FontFamily.Monospace,
-                        )
+                        nfcInfoRow("UID", info.uid, mono = true)
                     }
-                    Text("Technologies", style = MaterialTheme.typography.labelMedium)
-                    Text(
-                        info.techSummary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray,
-                    )
+                    nfcInfoRow("Technologies", info.techSummary)
+                    nfcInfoRow("Writable", if (info.isWritable) "Yes" else "No")
+                    nfcInfoRow("NDEF Formattable", if (info.isNdefFormattable) "Yes" else "No")
+                    if (info.maxSize > 0) {
+                        nfcInfoRow("Max NDEF Size", "${info.maxSize} bytes")
+                        nfcInfoRow("Used Size", "${info.usedSize} bytes")
+                    }
                     if (info.records.isNotEmpty()) {
                         Text("Records", style = MaterialTheme.typography.labelMedium)
                         info.records.forEach { record ->
@@ -460,30 +457,23 @@ fun NfcScreen(vm: DeckViewModel) {
         Spacer(Modifier.weight(1f))
 
         Text("Write to a tag", style = MaterialTheme.typography.titleSmall)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(
-                selected = vm.writeAsUri,
-                onClick = { vm.writeAsUri = true },
-                label = { Text("URI") },
-            )
-            FilterChip(
-                selected = !vm.writeAsUri,
-                onClick = { vm.writeAsUri = false },
-                label = { Text("Text") },
-            )
-        }
         OutlinedTextField(
-            value = vm.writeValue,
-            onValueChange = { vm.writeValue = it },
-            label = {
-                Text(if (vm.writeAsUri) "URI (e.g. https://…)" else "Text")
-            },
+            value = vm.writeText,
+            onValueChange = { vm.writeText = it },
+            label = { Text("Text record") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        OutlinedTextField(
+            value = vm.writeUri,
+            onValueChange = { vm.writeUri = it },
+            label = { Text("URI (e.g. https://…)") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
         Button(
             onClick = { vm.armWrite() },
-            enabled = !vm.nfcBusy && vm.writeValue.isNotBlank(),
+            enabled = !vm.nfcBusy && (vm.writeText.isNotBlank() || vm.writeUri.isNotBlank()),
             modifier = Modifier.fillMaxWidth().height(48.dp),
         ) {
             Text("Write — then tap a tag")
@@ -500,6 +490,21 @@ fun NfcScreen(vm: DeckViewModel) {
     }
     if (showSettings) {
         NfcSettingsDialog(vm.settings) { showSettings = false }
+    }
+}
+
+/// Label/value row for the scanned-tag card (omni `InfoRow` parity).
+@Composable
+private fun nfcInfoRow(label: String, value: String, mono: Boolean = false) {
+    Row(Modifier.fillMaxWidth()) {
+        Text(label, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+        Spacer(Modifier.weight(1f))
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmall,
+            fontFamily = if (mono) FontFamily.Monospace else FontFamily.Default,
+            maxLines = 1,
+        )
     }
 }
 

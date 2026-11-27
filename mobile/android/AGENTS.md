@@ -26,7 +26,7 @@ Requires JDK 17+ and the Android SDK (`compileSdk = 35`, `minSdk = 26`).
 - `DeckViewModel.kt` — `AndroidViewModel` owning form state (`host`,
   `port`, `token`), `ConnState`, latest `ImageBitmap` frame, `HelloInfo`,
   `desktopStats`, `page` (`DeckPage`), `focusMode`, NFC UI state
-  (`nfcInfo`, `nfcBusy`, `writeAsUri`/`writeValue`, `pendingWrite`), and
+  (`nfcInfo`, `nfcBusy`, `writeText`/`writeUri`, `pendingWrite`), and
   the `nfcHistory`/`settings` stores; publishes
   `SessionState.deckConnected` for the accessibility service.
   `onTagScanned` records every read to `nfcHistory` and auto-opens the

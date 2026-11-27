@@ -52,39 +52,34 @@ struct NfcView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Picker("Record type", selection: $model.writeAsUri) {
-                Text("URI").tag(true)
-                Text("Text").tag(false)
+            TextField("Text record", text: $model.writeText)
+                .textFieldStyle(.roundedBorder)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+
+            TextField("https://example.com", text: $model.writeURI)
+                .textFieldStyle(.roundedBorder)
+                .textInputAutocapitalization(.never)
+                .keyboardType(.URL)
+                .autocorrectionDisabled()
+
+            Button {
+                Task { await model.writeNfc() }
+            } label: {
+                Text("Write")
+                    .frame(maxWidth: .infinity)
             }
-            .pickerStyle(.segmented)
+            .buttonStyle(.borderedProminent)
+            .disabled(model.nfcBusy || composerRecords.isEmpty)
 
-            TextField(
-                model.writeAsUri ? "URI (e.g. https://…)" : "Text",
-                text: $model.writeValue
-            )
-            .textFieldStyle(.roundedBorder)
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-
-            HStack(spacing: 12) {
-                Button {
-                    Task { await model.writeNfc() }
-                } label: {
-                    Text("Write")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(model.nfcBusy || model.writeValue.trimmingCharacters(in: .whitespaces).isEmpty)
-
-                Button {
-                    Task { await model.scanNfc() }
-                } label: {
-                    Text("Scan")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .disabled(model.nfcBusy)
+            Button {
+                Task { await model.scanNfc() }
+            } label: {
+                Text("Scan")
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.bordered)
+            .disabled(model.nfcBusy)
 
             Text("Reading works for any NDEF tag; writing needs a writable NDEF tag.")
                 .font(.caption2)
@@ -99,22 +94,33 @@ struct NfcView: View {
         }
     }
 
+    /// Records the composer would write — omni `composerRecords` parity.
+    private var composerRecords: [NdefRecord] {
+        var records: [NdefRecord] = []
+        let text = model.writeText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !text.isEmpty { records.append(.text(text, languageCode: "en")) }
+        let uri = model.writeURI.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !uri.isEmpty { records.append(.uri(uri)) }
+        return records
+    }
+
     private func tagCard(_ info: TagInfo) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             if !info.uid.isEmpty {
-                Text("UID: \(info.uid)")
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.secondary)
+                infoRow("UID", info.uid, monospaced: true)
             }
-            Text(info.techList.joined(separator: ", "))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            infoRow("Technologies", info.techList.joined(separator: ", "))
+            infoRow("Writable", info.isWritable ? "Yes" : "No")
+            infoRow("NDEF Formattable", info.isNdefFormattable ? "Yes" : "No")
+            if info.maxSize > 0 {
+                infoRow("Max NDEF Size", "\(info.maxSize) bytes")
+                infoRow("Used Size", "\(info.usedSize) bytes")
+            }
             if !info.ndefRecords.isEmpty {
-                Text("Records")
+                Text("NDEF Records")
                     .font(.caption.bold())
-                ForEach(Array(info.ndefRecords.enumerated()), id: \.offset) { _, record in
-                    Text("• \(describe(record))")
-                        .font(.caption)
+                ForEach(Array(info.ndefRecords.enumerated()), id: \.offset) { index, record in
+                    recordCard(index: index, record: record)
                 }
             }
         }
@@ -124,18 +130,45 @@ struct NfcView: View {
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
-    private func describe(_ record: NdefRecord) -> String {
-        switch record {
-        case let .uri(uri):
-            "URI: \(uri)"
-        case let .text(text, _):
-            "Text: \(text)"
-        case let .mime(mimeType, payload):
-            "MIME \(mimeType): \(payload.count)B"
-        case let .aar(packageName):
-            "AAR: \(packageName)"
-        case let .unknown(tnf, _, payload):
-            "unknown (tnf=\(tnf), \(payload.count)B)"
+    private func infoRow(_ label: String, _ value: String, monospaced: Bool = false) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .font(monospaced ? .caption.monospaced() : .caption)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .truncationMode(.middle)
         }
+    }
+
+    /// Structured per-record card — omni `recordCard` parity.
+    private func recordCard(index: Int, record: NdefRecord) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            switch record {
+            case let .text(text, languageCode):
+                infoRow("Record \(index)", "Text")
+                infoRow("Language", languageCode)
+                infoRow("Content", text)
+            case let .uri(uri):
+                infoRow("Record \(index)", "URI")
+                infoRow("URL", uri)
+            case let .mime(mimeType, payload):
+                infoRow("Record \(index)", "MIME")
+                infoRow("Type", mimeType)
+                infoRow("Payload", "\(payload.count) bytes")
+            case let .aar(packageName):
+                infoRow("Record \(index)", "App Launch")
+                infoRow("Package", packageName)
+            case let .unknown(tnf, _, _):
+                infoRow("Record \(index)", "Unknown (TNF: \(tnf))")
+            }
+        }
+        .padding(8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(white: 0.16))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }

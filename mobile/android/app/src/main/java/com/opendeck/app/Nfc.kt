@@ -16,6 +16,10 @@ import java.nio.charset.StandardCharsets
 data class NfcTagInfo(
     val uid: String,
     val techs: List<String>,
+    val isWritable: Boolean,
+    val isNdefFormattable: Boolean,
+    val maxSize: Int,
+    val usedSize: Int,
     val records: List<String>,
     /// First `opendeck://…` URI record found, if any (tap-to-pair payload).
     val connectUri: String?,
@@ -28,7 +32,10 @@ object NfcTags {
     fun inspect(tag: Tag): NfcTagInfo {
         val records = mutableListOf<String>()
         var connectUri: String? = null
-        readMessage(tag)?.records?.forEach { record ->
+        var usedSize = 0
+        val message = readMessage(tag)
+        message?.let { usedSize = runCatching { it.toByteArray().size }.getOrDefault(0) }
+        message?.records?.forEach { record ->
             val text = describeRecord(record)
             records += text
             // describeRecord prefixes URIs with "URI: " — strip it for matching.
@@ -36,25 +43,37 @@ object NfcTags {
                 connectUri = text.removePrefix("URI: ")
             }
         }
+        // getType/getMaxSize are cached properties but guard anyway —
+        // inspect() runs off the main thread and must never throw.
+        val ndef = runCatching { Ndef.get(tag) }.getOrNull()
+        val ndefType = runCatching { ndef?.type }.getOrNull()
+        val ndefMax = runCatching { ndef?.maxSize }.getOrNull() ?: 0
         return NfcTagInfo(
             uid = tag.id?.joinToString("") { "%02X".format(it) } ?: "",
             techs = tag.techList.map { it.substringAfterLast('.') },
+            isWritable = ndefType == Ndef.TYPE_NDEF,
+            isNdefFormattable = runCatching { NdefFormatable.get(tag) != null }
+                .getOrDefault(false),
+            maxSize = ndefMax,
+            usedSize = usedSize,
             records = records,
             connectUri = connectUri,
         )
     }
 
-    /** Write a URI or text record. Returns null on success, else an error. */
-    fun write(tag: Tag, value: String, isUri: Boolean): String? {
-        val trimmed = value.trim()
-        if (trimmed.isEmpty()) return "Empty value"
-        val record = if (isUri) {
-            NdefRecord.createUri(trimmed)
-        } else {
-            NdefRecord.createTextRecord("en", trimmed)
-        }
-        val message = NdefMessage(arrayOf(record))
-        return writeMessage(tag, message)
+    /**
+     * Write optional text + URI records as one NDEF message
+     * (omni/iOS `composerRecords` parity — both fields independent).
+     * Returns null on success, else an error.
+     */
+    fun write(tag: Tag, text: String, uri: String): String? {
+        val ndefRecords = mutableListOf<NdefRecord>()
+        val t = text.trim()
+        if (t.isNotEmpty()) ndefRecords += NdefRecord.createTextRecord("en", t)
+        val u = uri.trim()
+        if (u.isNotEmpty()) ndefRecords += NdefRecord.createUri(u)
+        if (ndefRecords.isEmpty()) return "Enter a text or URI value first"
+        return writeMessage(tag, NdefMessage(ndefRecords.toTypedArray()))
     }
 
     private fun writeMessage(tag: Tag, message: NdefMessage): String? {
