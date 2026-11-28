@@ -25,8 +25,11 @@ UI — the Vite build output in `server/web/` (source: `mobile/web/`, built via
 info), `GET /ports` + `POST /ports/kill` (SIGTERM/SIGKILL, token-required) +
 `GET /apps` (host introspection — listening sockets via `lsof`/`netstat`,
 processes via `sysinfo`; both spawn-blocking), `GET|POST|DELETE /clipboard`
-(desktop clipboard history + write-back, token-required), and
-`GET /ws?token=…` for the WebSocket upgrade.
+(desktop clipboard history + write-back, token-required), `GET /controls`
+
+- token-gated `POST /controls` (host hardware toggles: wifi/sound/
+  bluetooth/keyboard-layout/brightness — platform probes, macOS uses a
+  compiled Swift helper), and `GET /ws?token=…` for the WebSocket upgrade.
 
 ## Structure
 
@@ -49,6 +52,13 @@ processes via `sysinfo`; both spawn-blocking), `GET|POST|DELETE /clipboard`
   `kill_process` (omni `SignalProcessTerminator` parity).
 - `src/clipboard.rs` — 2s clipboard poller (`pbpaste`/`xclip`/`powershell`)
   - in-memory history (cap 100) behind token-gated `/clipboard` routes.
+- `src/controls.rs` — host hardware controls (`/controls` GET + POST):
+  wifi (networksetup/nmcli), sound (osascript/amixer), bluetooth,
+  keyboard layout, brightness. macOS compiles `opendeck-ctl.swift` once
+  per run (TIS input sources, private DisplayServices brightness,
+  IOBluetooth); Linux falls back to rfkill/wireless-tools/xrandr.
+- `src/opendeck-ctl.swift` — macOS helper embedded via `include_str!`,
+  compiled with `swiftc` into a temp dir on first use.
 - `src/protocol.rs` — serde wire types shared with every client. Normative spec:
   `docs/PROTOCOL.md` at repo root — update both together.
 

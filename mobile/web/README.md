@@ -9,8 +9,17 @@ copied into `server/web/` and embedded into the server binary, so a single
 
 ```sh
 pnpm install
-pnpm dev        # vite dev server (proxy API calls to a running server if needed)
+pnpm dev        # vite dev server — skips the connect form and auto-connects
 pnpm build      # outputs dist/
+```
+
+Dev auto-connect creds come from `?host=&port=&token=` URL params or the
+`VITE_HOST` / `VITE_PORT` / `VITE_TOKEN` env vars (defaults
+`127.0.0.1:47821`, empty token). Example:
+
+```sh
+open-deck-server --token dev &
+VITE_TOKEN=dev pnpm dev
 ```
 
 Copy the build into the server (or use `make web` from the repo root):

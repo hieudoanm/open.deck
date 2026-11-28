@@ -4,6 +4,7 @@
 mod actions;
 mod capture;
 mod clipboard;
+mod controls;
 mod hostinfo;
 mod input;
 mod protocol;
@@ -140,6 +141,13 @@ struct OpenUrlRequest {
     url: String,
 }
 
+#[derive(Deserialize)]
+struct ControlActRequest {
+    id: String,
+    action: String,
+    value: Option<i64>,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt()
@@ -199,6 +207,8 @@ async fn main() -> Result<()> {
         .route("/clipboard", get(clipboard_get_handler))
         .route("/clipboard", post(clipboard_write_handler))
         .route("/clipboard", axum::routing::delete(clipboard_clear_handler))
+        .route("/controls", get(controls_list_handler))
+        .route("/controls", post(controls_act_handler))
         .route("/ws", get(ws_handler))
         .layer(CorsLayer::permissive())
         .with_state(state);
@@ -484,6 +494,41 @@ async fn clipboard_clear_handler(
         guard.clear();
     }
     (StatusCode::OK, "cleared").into_response()
+}
+
+async fn controls_list_handler() -> Json<ControlsResponse> {
+    let controls = tokio::task::spawn_blocking(controls::list_controls)
+        .await
+        .unwrap_or_default();
+    Json(ControlsResponse {
+        platform: std::env::consts::OS.to_string(),
+        controls,
+    })
+}
+
+/// Controls mutate host state — token required (same pattern as
+/// `/ports/kill` and `/clipboard`).
+async fn controls_act_handler(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<HashMap<String, String>>,
+    Json(req): Json<ControlActRequest>,
+) -> Response {
+    let provided = params.get("token").cloned().unwrap_or_default();
+    if provided != state.token {
+        return (StatusCode::UNAUTHORIZED, "invalid pairing token").into_response();
+    }
+    let (id, action, value) = (req.id, req.action, req.value);
+    match tokio::task::spawn_blocking(move || controls::act(&id, &action, value)).await {
+        Ok(Ok(())) => (StatusCode::OK, "ok").into_response(),
+        Ok(Err(e)) => (StatusCode::BAD_REQUEST, e).into_response(),
+        Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+    }
+}
+
+#[derive(serde::Serialize)]
+struct ControlsResponse {
+    platform: String,
+    controls: Vec<controls::ControlInfo>,
 }
 
 async fn ws_handler(

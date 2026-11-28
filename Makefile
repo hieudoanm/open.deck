@@ -2,6 +2,7 @@
 #
 #   make dev      run open-deck-server locally (debug build)
 #   make dev-rel  run open-deck-server locally (release build)
+#   make dev-web  server + web dashboard dev servers together
 #   make build    cargo build --release in server/
 #   make test     cargo test in server/
 #   make lint     cargo fmt --check + clippy in server/
@@ -13,13 +14,18 @@
 
 PORT ?= 47821
 
-.PHONY: dev dev-rel build test lint web
+.PHONY: dev dev-rel dev-web build test lint web
 
 dev: ## Start the companion server locally (debug)
 	cd server && cargo run -- --port $(PORT)
 
 dev-rel: ## Start the companion server locally (release)
 	cd server && cargo run --release -- --port $(PORT)
+
+dev-web: ## Server + web dashboard together (fixed dev token)
+	(cd server && cargo run -- --port $(PORT) --token dev) & \
+	trap 'kill %1' INT TERM EXIT; \
+	VITE_TOKEN=dev pnpm --filter @opendeck/web dev
 
 build: ## Release-build the server
 	cd server && cargo build --release

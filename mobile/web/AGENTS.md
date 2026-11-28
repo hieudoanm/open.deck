@@ -29,11 +29,23 @@ make web          # from repo root: install + build + copy dist -> server/web
 - `src/main.tsx` / `src/App.tsx` — mount + connect ↔ deck session state;
   `?host=&port=&token=` URL params prefill and auto-connect (the server's
   startup QR encodes this URL)
-- `src/components/` — `ConnectView` (daisyUI card/inputs), `DeckView`
-  (top bar, swipe pager, dots, nav buttons, `POST /open`), `SystemPage` +
-  `Pages` (stat widgets + ports/apps lists), `BookmarksPage`, `Widget`
+- `src/pages/` — `ConnectPage` (daisyUI card/inputs) and `DeckPage`
+  (top bar, swipe pager, dots, nav buttons, `POST /open`)
+- `src/components/` — `SystemView` + `PortsView`/`AppsView` (stat widgets +
+  ports/apps lists), `BookmarksView`
+- `src/widgets/` — `ControlPage` (first pager page; `GET/POST /controls`
+  host hardware toggles — wifi/sound/bluetooth/keyboard/brightness),
+  `WidgetsPage` (composes `WeatherWidget` Open-Meteo, `CountdownWidget`,
+  `CryptoWidget` CoinGecko keyless, `ForexWidget` open.er-api.com VND base,
+  `StockWidget`, `DateTimeWidget`), `TimezonesPage`, `TimerWidget`,
+  `StopwatchWidget`, `Widget` (shared card), `index.ts` barrel
 - `src/hooks/` — `useWakeLock` (native Screen Wake Lock → hidden muted
-  `wake.mp4` fallback for insecure http:// contexts), `useNow` (clock)
+  `wake.mp4` fallback for insecure http:// contexts), `useNow` (clock),
+  `useLocalStorage` (widget settings)
+- `src/lib/` — `format.ts` (`fmtBytes`/`fmtRate`/`fmtUptime`), `ui.ts`
+  (shared Tailwind class strings), `weather.ts` (Open-Meteo + ClockCities
+  port), `crypto.ts` (CoinGecko, keyless), `forex.ts` (open.er-api.com VND
+  base), `stocks.ts`
 - `src/data/bookmarks.ts` — generated bookmark list migrated from
   `omni/packages/web` `apps.csv` (Phosphor icons via `react-icons/pi`)
 - `src/lib/format.ts` — `fmtBytes` / `fmtRate` / `fmtUptime`

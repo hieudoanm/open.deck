@@ -5,7 +5,7 @@ export type WakeState = "on" | "off" | "unsupported" | null;
 // Keeps the screen awake while mounted: native Screen Wake Lock where
 // available (secure contexts), otherwise a hidden muted looping video —
 // iOS keeps the display on during video playback.
-export function useWakeLock(): WakeState {
+export const useWakeLock = (): WakeState => {
   const [state, setState] = useState<WakeState>(null);
   const sentinelRef = useRef<WakeLockSentinel | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -72,4 +72,4 @@ export function useWakeLock(): WakeState {
   }, [acquire]);
 
   return state;
-}
+};

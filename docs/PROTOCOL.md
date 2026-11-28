@@ -114,11 +114,19 @@ the desktop companions:
 | `GET /clipboard?token=<t>`      | Desktop clipboard history `[{id,content,is_url,created_at,copied_count}]` |
 | `POST /clipboard?token=<t>`     | Body `{"content":"…"}` — write to OS clipboard + record                   |
 | `DELETE /clipboard?token=<t>`   | Clear desktop clipboard history                                           |
+| `GET /controls`                 | `{"platform":"…","controls":[{id,label,kind,supported,on,value,detail}]}` |
+| `POST /controls?token=<t>`      | Body `{"id":"wifi","action":"toggle","value":null}` — act on a control    |
 
-`/ports/kill` and all `/clipboard` routes require the pairing token —
-kill is destructive and clipboard contents are private. `/ports/kill`
-sends SIGTERM by default, SIGKILL when `"force":true`; the server's own
-pid and pid 0/1 are refused.
+`/ports/kill`, all `/clipboard` routes, and `POST /controls` require the
+pairing token — kill is destructive, clipboard contents are private, and
+controls mutate host state. `/ports/kill` sends SIGTERM by default,
+SIGKILL when `"force":true`; the server's own pid and pid 0/1 are refused.
+
+`/controls` reports host hardware toggles: `kind` is `toggle` (action
+`"toggle"`), `cycle` (action `"next"`, e.g. keyboard layout), or `level`
+(action `"set"` + `value` 0-100, e.g. brightness). `supported:false`
+controls carry the reason in `detail`; `detail` otherwise holds extra
+state (interface name, volume %, layout name).
 
 ## Client → Server
 

@@ -8,15 +8,35 @@ import type {
   StatsMsg,
   StatusMsg,
 } from "../types";
+import {
+  PiArrowClockwise,
+  PiCaretLeft,
+  PiCaretRight,
+  PiPower,
+} from "react-icons/pi";
 import { BOOKMARKS } from "../data/bookmarks";
-import { AppsPage, PortsPage } from "./Pages";
-import { SystemPage } from "./SystemPage";
-import { BookmarksPage, chunkBookmarks } from "./BookmarksPage";
+import { cx, pageCls } from "../lib/ui";
+import { AppsView } from "../components/AppsView";
+import { BookmarksView, chunkBookmarks } from "../components/BookmarksView";
+import { PortsView } from "../components/PortsView";
+import { SystemView } from "../components/SystemView";
+import { TimezonesPage } from "../widgets/TimezonesPage";
+import { WidgetsPage } from "../widgets/WidgetsPage";
+import { ControlPage } from "../widgets/ControlPage";
 
 const BOOKMARK_PAGES = chunkBookmarks(BOOKMARKS);
-const PAGE_COUNT = 3 + BOOKMARK_PAGES.length;
+const PAGE_COUNT = 6 + BOOKMARK_PAGES.length;
 
-export function DeckView({
+const NAV_BTN_CLS =
+  "size-8 rounded-full border border-neutral bg-base-300 text-base-content text-base leading-none cursor-pointer shrink-0 inline-flex items-center justify-center p-0 active:bg-primary active:text-white active:border-primary";
+const ICON_BTN_CLS =
+  "size-8 rounded-full border border-neutral bg-base-300 text-primary text-base leading-none cursor-pointer shrink-0 inline-flex items-center justify-center p-0 active:bg-primary active:text-white active:border-primary";
+const ICON_BTN_DANGER_CLS =
+  "size-8 rounded-full border border-error/40 bg-base-300 text-error text-base leading-none cursor-pointer shrink-0 inline-flex items-center justify-center p-0 active:bg-error active:text-white active:border-error";
+const WAKE_BADGE_CLS =
+  "text-xs font-semibold px-2 py-0.5 rounded-full border border-neutral text-muted shrink-0";
+
+export const DeckPage = ({
   host,
   port,
   token,
@@ -26,7 +46,7 @@ export function DeckView({
   port: string;
   token: string;
   onClose: () => void;
-}) {
+}) => {
   const base = `http://${host}:${port}`;
   const [statusText, setStatusText] = useState("connecting…");
   const [statusOk, setStatusOk] = useState(false);
@@ -36,6 +56,7 @@ export function DeckView({
   const [ports, setPorts] = useState<PortEntry[] | null>(null);
   const [apps, setApps] = useState<AppEntry[] | null>(null);
   const [page, setPage] = useState(0);
+  const [confirming, setConfirming] = useState(false);
   const wake = useWakeLock();
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -141,47 +162,70 @@ export function DeckView({
 
   const wakeBadge =
     wake == null ? null : wake === "on" ? (
-      <span className="wake-badge on" title="screen wake lock">
+      <span
+        className={cx(WAKE_BADGE_CLS, "text-success border-success/40")}
+        title="screen wake lock"
+      >
         awake
       </span>
     ) : (
-      <span className="wake-badge off" title="screen wake lock">
+      <span
+        className={cx(WAKE_BADGE_CLS, "text-error border-error/40")}
+        title="screen wake lock"
+      >
         {wake === "unsupported" ? "no wake lock" : "sleeping"}
       </span>
     );
 
   return (
-    <div className="deck-view">
-      <div className="topbar">
+    <div className="relative flex h-full flex-col overflow-hidden pt-[calc(14px+env(safe-area-inset-top))] pr-[calc(14px+env(safe-area-inset-right))] pb-[calc(14px+env(safe-area-inset-bottom))] pl-[calc(14px+env(safe-area-inset-left))]">
+      <div className="mb-3 flex items-center gap-2.5">
         <button
-          className="navbtn"
+          className={NAV_BTN_CLS}
           aria-label="previous"
+          title="previous"
           onClick={() => goTo(page - 1)}
         >
-          ‹
+          <PiCaretLeft />
         </button>
-        <span className="title">OpenDeck</span>
-        <span className={`status-dot${statusOk ? "" : "err"}`} />
-        <span className="status-text">{statusText}</span>
+        <span className="font-bold tracking-tight">OpenDeck</span>
+        <span
+          className={cx(
+            "size-2.5 shrink-0 rounded-full",
+            statusOk ? "bg-success" : "bg-error",
+          )}
+        />
+        <span className="text-muted truncate text-xs">{statusText}</span>
         {wakeBadge}
-        <span style={{ flex: 1 }} />
-        <button className="btn btn-sm" onClick={pollHttp}>
-          Refresh
-        </button>
-        <button className="btn btn-error btn-sm" onClick={onClose}>
-          Disconnect
+        <span className="flex-1" />
+        <button
+          className={ICON_BTN_CLS}
+          aria-label="refresh"
+          title="refresh"
+          onClick={pollHttp}
+        >
+          <PiArrowClockwise />
         </button>
         <button
-          className="navbtn"
+          className={ICON_BTN_DANGER_CLS}
+          aria-label="disconnect"
+          title="disconnect"
+          onClick={() => setConfirming(true)}
+        >
+          <PiPower />
+        </button>
+        <button
+          className={NAV_BTN_CLS}
           aria-label="next"
+          title="next"
           onClick={() => goTo(page + 1)}
         >
-          ›
+          <PiCaretRight />
         </button>
       </div>
 
       <div
-        className="pager"
+        className="relative min-h-0 flex-1 touch-pan-y overflow-hidden"
         onPointerDown={(e) => {
           startX.current = e.clientX;
         }}
@@ -196,21 +240,30 @@ export function DeckView({
         }}
       >
         <div
-          className="track"
+          className="ease flex h-full transition-transform duration-300"
           style={{ transform: `translateX(-${page * 100}%)` }}
         >
-          <section className="page">
-            <SystemPage stats={stats} hello={hello} server={server} />
+          <section className={pageCls}>
+            <ControlPage base={base} token={token} />
           </section>
-          <section className="page">
-            <PortsPage ports={ports} />
+          <section className={pageCls}>
+            <SystemView stats={stats} hello={hello} server={server} />
           </section>
-          <section className="page">
-            <AppsPage apps={apps} />
+          <section className={pageCls}>
+            <WidgetsPage />
+          </section>
+          <section className={pageCls}>
+            <TimezonesPage />
+          </section>
+          <section className={pageCls}>
+            <PortsView ports={ports} />
+          </section>
+          <section className={pageCls}>
+            <AppsView apps={apps} />
           </section>
           {BOOKMARK_PAGES.map((items, i) => (
-            <section className="page" key={i}>
-              <BookmarksPage
+            <section className={pageCls} key={i}>
+              <BookmarksView
                 items={items}
                 index={i}
                 total={BOOKMARK_PAGES.length}
@@ -221,16 +274,49 @@ export function DeckView({
         </div>
       </div>
 
-      <div className="dots">
+      <div className="pointer-events-none absolute bottom-[calc(8px+env(safe-area-inset-bottom))] left-1/2 z-10 flex -translate-x-1/2 gap-2">
         {Array.from({ length: PAGE_COUNT }, (_, i) => (
           <button
             key={i}
-            className={i === page ? "on" : ""}
+            className={cx(
+              "pointer-events-auto size-2 cursor-pointer rounded-full border-0 p-0",
+              i === page ? "bg-primary" : "bg-white/25",
+            )}
             onClick={() => goTo(i)}
             aria-label={`page ${i + 1}`}
           />
         ))}
       </div>
+
+      {confirming && (
+        <div
+          className="modal modal-open bg-black/60 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setConfirming(false)}
+        >
+          <div
+            className="modal-box max-w-xs"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-bold">Disconnect?</h3>
+            <p className="text-muted mt-1 text-sm">
+              The dashboard will close and return to the connect screen.
+            </p>
+            <div className="modal-action">
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => setConfirming(false)}
+              >
+                Cancel
+              </button>
+              <button className="btn btn-error btn-sm" onClick={onClose}>
+                Disconnect
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};

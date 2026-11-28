@@ -1,15 +1,19 @@
 import { useState } from "react";
-import { ConnectView, type Creds } from "./components/ConnectView";
-import { DeckView } from "./components/DeckView";
+import { ConnectPage, type Creds } from "./pages/ConnectPage";
+import { DeckPage } from "./pages/DeckPage";
 
-export default function App() {
+const App = () => {
   const params = new URLSearchParams(window.location.search);
+  const isDev = import.meta.env.DEV;
   const [creds, setCreds] = useState<Creds>({
-    host: params.get("host") || "127.0.0.1",
-    port: params.get("port") || "47821",
-    token: params.get("token") || "",
+    host: params.get("host") || import.meta.env.VITE_HOST || "127.0.0.1",
+    port: params.get("port") || import.meta.env.VITE_PORT || "47821",
+    token: params.get("token") || import.meta.env.VITE_TOKEN || "",
   });
-  const [connected, setConnected] = useState(() => !!params.get("token"));
+  // Dev mode skips the connect form and goes straight to the dashboard.
+  const [connected, setConnected] = useState(
+    () => isDev || !!params.get("token"),
+  );
   const [status, setStatus] = useState("");
   const [statusCls, setStatusCls] = useState("");
 
@@ -21,7 +25,7 @@ export default function App() {
 
   if (connected) {
     return (
-      <DeckView
+      <DeckPage
         host={creds.host.trim() || "127.0.0.1"}
         port={creds.port.trim() || "47821"}
         token={creds.token.trim()}
@@ -31,7 +35,7 @@ export default function App() {
   }
 
   return (
-    <ConnectView
+    <ConnectPage
       creds={creds}
       onChange={setCreds}
       onConnect={() => setConnected(true)}
@@ -39,4 +43,6 @@ export default function App() {
       statusCls={statusCls}
     />
   );
-}
+};
+
+export default App;

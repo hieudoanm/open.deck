@@ -1,21 +1,30 @@
-import { useNow } from "../hooks/useNow";
 import { fmtBytes, fmtRate, fmtUptime } from "../lib/format";
+import {
+  barCls,
+  barFillCls,
+  cx,
+  gridCls,
+  pageTitleCls,
+  subCls,
+  valueCls,
+  valueSmallCls,
+} from "../lib/ui";
 import type { HelloMsg, StatsMsg, StatusMsg } from "../types";
-import { Widget } from "./Widget";
+import { Widget } from "../widgets/Widget";
 
-function Bar({ pct }: { pct: number }) {
-  const cls = pct > 90 ? "hot" : pct > 70 ? "warm" : "";
+const Bar = ({ pct }: { pct: number }) => {
+  const fill = pct > 90 ? "bg-error" : pct > 70 ? "bg-warning" : "bg-primary";
   return (
-    <div className="bar">
+    <div className={barCls}>
       <i
-        className={cls}
+        className={cx(barFillCls, fill)}
         style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
       />
     </div>
   );
-}
+};
 
-export function SystemPage({
+export const SystemView = ({
   stats,
   hello,
   server,
@@ -23,40 +32,26 @@ export function SystemPage({
   stats: StatsMsg | null;
   hello: HelloMsg | null;
   server: StatusMsg | null;
-}) {
-  const now = useNow();
+}) => {
   const s = stats;
   return (
     <>
-      <div className="page-title">System</div>
-      <div className="grid">
-        <Widget label="Time">
-          <div className="value clock-value">
-            {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </div>
-          <div className="sub">
-            {now.toLocaleDateString([], {
-              weekday: "short",
-              month: "short",
-              day: "numeric",
-            })}
-          </div>
-        </Widget>
-
+      <div className={pageTitleCls}>System</div>
+      <div className={gridCls}>
         <Widget label="CPU">
-          <div className="value">
+          <div className={valueCls}>
             {s?.cpu_percent != null ? s.cpu_percent.toFixed(0) : "–"}
-            <small>%</small>
+            <small className={valueSmallCls}>%</small>
           </div>
           <Bar pct={s?.cpu_percent ?? 0} />
         </Widget>
 
         <Widget label="Memory">
-          <div className="value">
+          <div className={valueCls}>
             {fmtBytes(s?.mem_used)}
-            <small> / {fmtBytes(s?.mem_total)}</small>
+            <small className={valueSmallCls}> / {fmtBytes(s?.mem_total)}</small>
           </div>
-          <div className="sub">
+          <div className={subCls}>
             {s?.swap_total
               ? `swap ${fmtBytes(s.swap_used)} / ${fmtBytes(s.swap_total)}`
               : ""}
@@ -65,23 +60,26 @@ export function SystemPage({
         </Widget>
 
         <Widget label="Disk">
-          <div className="value">
+          <div className={valueCls}>
             {fmtBytes(s?.disk_used)}
-            <small> / {fmtBytes(s?.disk_total)}</small>
+            <small className={valueSmallCls}>
+              {" "}
+              / {fmtBytes(s?.disk_total)}
+            </small>
           </div>
           <Bar pct={s?.disk_total ? (s.disk_used / s.disk_total) * 100 : 0} />
         </Widget>
 
         <Widget label="Network">
-          <div className="value">{fmtRate(s?.net_rx_rate)}</div>
-          <div className="sub">
+          <div className={valueCls}>{fmtRate(s?.net_rx_rate)}</div>
+          <div className={subCls}>
             ↓ {fmtRate(s?.net_rx_rate)} · ↑ {fmtRate(s?.net_tx_rate)}
           </div>
         </Widget>
 
         <Widget label="Uptime">
-          <div className="value">{fmtUptime(s?.uptime_secs)}</div>
-          <div className="sub">
+          <div className={valueCls}>{fmtUptime(s?.uptime_secs)}</div>
+          <div className={subCls}>
             {s?.net_interfaces?.length
               ? s.net_interfaces
                   .map((i) => i.name)
@@ -92,14 +90,14 @@ export function SystemPage({
         </Widget>
 
         <Widget label="Display">
-          <div className="value">
+          <div className={valueCls}>
             {hello
               ? `${hello.desktop_width}×${hello.desktop_height}`
               : server
                 ? `${server.desktop_width}×${server.desktop_height}`
                 : "–"}
           </div>
-          <div className="sub">
+          <div className={subCls}>
             {hello
               ? `${hello.stream_width}×${hello.stream_height} stream · ${hello.fps}fps`
               : server
@@ -110,14 +108,14 @@ export function SystemPage({
 
         {s?.battery_percent != null && (
           <Widget label="Battery">
-            <div className="value">
+            <div className={valueCls}>
               {Math.round(s.battery_percent)}
-              <small>%</small>
+              <small className={valueSmallCls}>%</small>
             </div>
-            <div className="sub">{s.battery_state || ""}</div>
+            <div className={subCls}>{s.battery_state || ""}</div>
           </Widget>
         )}
       </div>
     </>
   );
-}
+};
