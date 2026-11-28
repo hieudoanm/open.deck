@@ -8,9 +8,19 @@ export const chunkBookmarks = (
   items: Bookmark[],
   size = BOOKMARKS_PER_PAGE,
 ): Bookmark[][] => {
+  // Balance pages so the last one isn't a sparse remainder: with 61 items
+  // at 12/page the final page would hold a single tile.
+  const pageCount = Math.ceil(items.length / size);
+  if (pageCount <= 1) return items.length ? [items] : [];
+  const base = Math.floor(items.length / pageCount);
+  const extra = items.length % pageCount;
   const out: Bookmark[][] = [];
-  for (let i = 0; i < items.length; i += size)
-    out.push(items.slice(i, i + size));
+  let i = 0;
+  for (let p = 0; p < pageCount; p++) {
+    const n = base + (p < extra ? 1 : 0);
+    out.push(items.slice(i, i + n));
+    i += n;
+  }
   return out;
 };
 

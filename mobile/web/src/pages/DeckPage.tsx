@@ -18,14 +18,16 @@ import { BOOKMARKS } from "../data/bookmarks";
 import { cx, pageCls } from "../lib/ui";
 import { AppsView } from "../components/AppsView";
 import { BookmarksView, chunkBookmarks } from "../components/BookmarksView";
+import { CalculatorView } from "../components/CalculatorView";
+import { ConverterView } from "../components/ConverterView";
 import { PortsView } from "../components/PortsView";
 import { SystemView } from "../components/SystemView";
 import { TimezonesPage } from "../widgets/TimezonesPage";
 import { WidgetsPage } from "../widgets/WidgetsPage";
-import { ControlPage } from "../widgets/ControlPage";
+import { ControlView } from "../components/ControlView";
 
 const BOOKMARK_PAGES = chunkBookmarks(BOOKMARKS);
-const PAGE_COUNT = 6 + BOOKMARK_PAGES.length;
+const PAGE_COUNT = 8 + BOOKMARK_PAGES.length;
 
 const NAV_BTN_CLS =
   "size-8 rounded-full border border-neutral bg-base-300 text-base-content text-base leading-none cursor-pointer shrink-0 inline-flex items-center justify-center p-0 active:bg-primary active:text-white active:border-primary";
@@ -56,6 +58,7 @@ export const DeckPage = ({
   const [ports, setPorts] = useState<PortEntry[] | null>(null);
   const [apps, setApps] = useState<AppEntry[] | null>(null);
   const [page, setPage] = useState(0);
+  const [calcExpr, setCalcExpr] = useState("");
   const [confirming, setConfirming] = useState(false);
   const wake = useWakeLock();
 
@@ -244,7 +247,7 @@ export const DeckPage = ({
           style={{ transform: `translateX(-${page * 100}%)` }}
         >
           <section className={pageCls}>
-            <ControlPage base={base} token={token} />
+            <ControlView base={base} token={token} />
           </section>
           <section className={pageCls}>
             <SystemView stats={stats} hello={hello} server={server} />
@@ -260,6 +263,12 @@ export const DeckPage = ({
           </section>
           <section className={pageCls}>
             <AppsView apps={apps} />
+          </section>
+          <section className={pageCls}>
+            <CalculatorView expression={calcExpr} onExpression={setCalcExpr} />
+          </section>
+          <section className={pageCls}>
+            <ConverterView expression={calcExpr} />
           </section>
           {BOOKMARK_PAGES.map((items, i) => (
             <section className={pageCls} key={i}>

@@ -1,4 +1,3 @@
-export { ControlPage } from "./ControlPage";
 export { Widget } from "./Widget";
 export { WidgetsPage } from "./WidgetsPage";
 export { TimezonesPage } from "./TimezonesPage";

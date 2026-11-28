@@ -11,9 +11,9 @@ import {
 } from "react-icons/pi";
 import type { IconType } from "react-icons";
 import { cx, pageTitleCls } from "../lib/ui";
-import { StopwatchWidget } from "./StopwatchWidget";
-import { TimerWidget } from "./TimerWidget";
-import { SkeletonTiles } from "./Skeleton";
+import { StopwatchWidget } from "../widgets/StopwatchWidget";
+import { TimerWidget } from "../widgets/TimerWidget";
+import { SkeletonTiles } from "../widgets/Skeleton";
 
 interface Control {
   id: string;
@@ -102,7 +102,7 @@ const LevelTile = ({
   );
 };
 
-export const ControlPage = ({
+export const ControlView = ({
   base,
   token,
 }: {

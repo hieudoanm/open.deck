@@ -33,7 +33,7 @@ make web          # from repo root: install + build + copy dist -> server/web
   (top bar, swipe pager, dots, nav buttons, `POST /open`)
 - `src/components/` — `SystemView` + `PortsView`/`AppsView` (stat widgets +
   ports/apps lists), `BookmarksView`
-- `src/widgets/` — `ControlPage` (first pager page; `GET/POST /controls`
+- `src/widgets/` — `ControlView` (first pager page; `GET/POST /controls`
   host hardware toggles — wifi/sound/bluetooth/keyboard/brightness),
   `WidgetsPage` (composes `WeatherWidget` Open-Meteo, `CountdownWidget`,
   `CryptoWidget` CoinGecko keyless, `ForexWidget` open.er-api.com VND base,
